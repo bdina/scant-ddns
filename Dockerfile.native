@@ -1,0 +1,57 @@
+# To build image Run `docker build --tag ddns:latest .`
+
+ARG GRAALVM_VERSION=19.0.0
+ARG GRAALVM_WORKDIR=/graalvm/src/project
+
+ARG DDNS_VERSION=1.0
+
+# Multi-stage image ... creates an intermediate layer for doing the graalvm native
+# build (this is discarded by docker post-build)
+FROM oracle/graalvm-ce:${GRAALVM_VERSION} AS build
+
+ARG GRADLE_VERSION=5.4.1
+ARG DDNS_VERSION
+
+# Install tools required for project
+# Run `docker build --no-cache .` to update dependencies
+RUN gu install native-image \
+ && yum install -y wget unzip \
+ && rm -rf /var/cache/yum \
+ && wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -P /tmp \
+ && unzip -d /opt/gradle /tmp/gradle-${GRADLE_VERSION}-bin.zip
+
+ENV GRADLE_HOME=/opt/gradle/gradle-${GRADLE_VERSION} \
+    PATH=${GRADLE_HOME}/bin:${PATH}
+
+WORKDIR /graalvm/src/project
+
+# Copy the entire project and build it
+# This layer is rebuilt when a file changes in the project directory
+COPY . /graalvm/src/project
+RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon uberJar \
+ && ${JAVA_HOME}/bin/native-image \
+    --no-server \
+    --static \
+    --enable-url-protocols=http,https \
+    -H:Name=ddns \
+    -H:ReflectionConfigurationFiles=reflectconfig \
+    -jar build/libs/ddns-${DDNS_VERSION}.jar
+
+# This results in a single layer image
+#FROM alpine AS ddns
+FROM scratch AS ddns-scratch
+
+ARG GRAALVM_WORKDIR
+ARG DDNS_VERSION
+
+ENV DDNS_HOME=/opt/ddns \
+    PATH=${DDNS_HOME}/bin:${PATH}
+
+WORKDIR ${DDNS_HOME}
+
+COPY --from=build ${GRAALVM_WORKDIR}/ddns* ${DDNS_HOME}/
+
+# And we finally create the application layer
+FROM ddns-scratch AS ddns
+ENTRYPOINT [ "./ddns-1.0" ]
+CMD [ "-d" ]

@@ -1,0 +1,4 @@
+dns.server.ip=8.8.8.8
+ddns.service.password=
+ddns.host=
+ddns.domain=

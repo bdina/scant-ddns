@@ -1,0 +1,4 @@
+FROM openjdk:8-jre-alpine
+WORKDIR /opt/ddns/
+COPY ./build/libs/upnp-sandbox-1.0.jar ./ddns.jar
+CMD [ "java" , "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns.jar" , "-d" ]
