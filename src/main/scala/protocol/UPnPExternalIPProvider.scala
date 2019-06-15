@@ -107,7 +107,7 @@ object UPnPExternalIPProvider {
 
 class UPnPExternalIPProvider extends ExternalIPProvider {
 
-  import java.net.{DatagramPacket,DatagramSocket}
+  import java.net.{DatagramPacket, DatagramSocket}
 
   import UPnPExternalIPProvider._
 
@@ -122,7 +122,7 @@ class UPnPExternalIPProvider extends ExternalIPProvider {
     socket.setSoTimeout(1000)
 
     val buff = new Array[Byte](8192)
-    val response = new DatagramPacket(buff,buff.length)
+    val response = new DatagramPacket(buff, buff.length)
 
     socket.send(request)
     socket.receive(response)
@@ -132,10 +132,16 @@ class UPnPExternalIPProvider extends ExternalIPProvider {
     controlLocation(responseData) match {
       case Some(location) =>
         val url = new URL(location)
-        val externalIp = fetchExternalIp(url)
+        try {
+          val externalIp = fetchExternalIp(url)
 
-        logger.info(s"external ip - $externalIp")
-        Some(externalIp)
+          logger.info(s"external ip - $externalIp")
+          Some(externalIp)
+        } catch {
+          case ex: Exception =>
+            logger.severe(s"no external ip discovered! ${ex.getMessage}")
+            None
+        }
       case None => {
         logger.severe("no external ip discovered!")
         None
