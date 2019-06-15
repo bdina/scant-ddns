@@ -30,11 +30,13 @@ class SimpleDNSProvider extends DNSProvider {
 
   import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
   import java.net.{DatagramPacket, DatagramSocket}
+  import java.time.Instant
 
   import protocol.SimpleDNSProvider._
 
-  def address(host: String, domain: String): Option[InetAddress] = {
+  private var cached_address: Option[(InetAddress,Instant)] = None
 
+  def query(host: String, domain: String): Option[InetAddress] = {
     /** DNS QUERY **/
 
     val fqdn = s"$host.$domain"
@@ -84,13 +86,13 @@ class SimpleDNSProvider extends DNSProvider {
     val dnsFrame = baos.toByteArray
     logger.finer(s"Sending: ${dnsFrame.length} bytes")
     for (i <- 0 until dnsFrame.length) {
-        logger.finest(() => f"0x${dnsFrame(i)}%x ")
+      logger.finest(() => f"0x${dnsFrame(i)}%x ")
     }
 
     // *** Send DNS Request Frame ***
     val dnssocket = new DatagramSocket()
     logger.finest("sending question to dns ...")
-    val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsServer (), DnsServerPort)
+    val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsServer(), DnsServerPort)
     dnssocket.send(dnsReqPacket)
 
     // Await response from DNS server
@@ -125,7 +127,9 @@ class SimpleDNSProvider extends DNSProvider {
     logger.finest(f"Field: 0x${din.readShort()}%x")
     logger.finest(f"Type: 0x${din.readShort()}%x")
     logger.finest(f"Class: 0x${din.readShort()}%x")
-    logger.finest(f"TTL: 0x${din.readInt()}%x")
+
+    val ttl = din.readInt()
+    logger.finest(f"TTL: 0x$ttl%x")
 
     val addrLen = din.readShort()
     logger.fine(f"Len: 0x$addrLen%x")
@@ -142,10 +146,28 @@ class SimpleDNSProvider extends DNSProvider {
         logger.severe("dns response to question was nill")
         None
       } else {
-        val ip = dnsIp.substring(0,dnsIp.length - 1)
+        val ip = dnsIp.substring(0, dnsIp.length - 1)
         logger.info(s"dns response to question was $ip")
-        Some(InetAddress.getByName(ip))
+        val address = InetAddress.getByName(ip)
+        logger.info(s"cache dns response for $ttl seconds")
+        this.cached_address = Some(address, Instant.now.plusSeconds(ttl))
+        Some(address)
       }
     } else None
+  }
+
+  def address(host: String, domain: String): Option[InetAddress] = {
+    cached_address match {
+      case Some((address, ttl)) =>
+        if (Instant.now().isBefore(ttl)) {
+          logger.fine("CACHE HIT")
+          Some(address)
+        } else {
+          logger.fine("cached value expired - invalidating")
+          this.cached_address = None
+          query(host, domain)
+        }
+      case None => query(host, domain)
+    }
   }
 }
