@@ -83,25 +83,36 @@ object UPnPExternalIPProvider {
     }
   }
 
-  def fetchExternalIp(url: URL): InetAddress = {
+  val WAN_IP_URN = "urn:schemas-upnp-org:service:WANIPConnection:1"
+
+  def fetchExternalIp(url: URL): Option[InetAddress] = {
 
     import scala.xml.XML
 
     val xml = XML.loadString(httpGet(url))
     val baseUrl = s"http://${url.getHost}:${url.getPort}"
 
+    var ctl_url: Option[URL] = None
     (xml \\ "service").foreach(svc => {
         val serviceType = (svc \ "serviceType").text
         val controlUrl  = s"$baseUrl${ (svc \ "controlURL").text }"
         val scpdUrl     = s"$baseUrl${ (svc \ "SCPDURL").text }"
+        if ( WAN_IP_URN.equals(serviceType) ) {
+          ctl_url = Some(new URL(controlUrl))
+          logger.fine(s"found WAN IP control url: $ctl_url")
+        }
         logger.fine(s"$serviceType:\n  SCPD_URL: $scpdUrl\n  CTRL_URL: $controlUrl")
     })
 
-    val headers = ("SOAPAction", soapAction) :: Nil
-    val ctrlContent = httpPost(new URL(s"http://${routerIp().getHostAddress}:58192/ctl/IPConn"), soapBody, headers)
+    ctl_url match {
+      case Some(url) =>
+        val headers = ("SOAPAction", soapAction) :: Nil
+        val ctrlContent = httpPost(url, soapBody, headers)
 
-    val ctrlXml = XML.loadString(ctrlContent.toString)
-    InetAddress.getByName((ctrlXml \\ "NewExternalIPAddress").text)
+        val ctrlXml = XML.loadString(ctrlContent.toString)
+        Some(InetAddress.getByName((ctrlXml \\ "NewExternalIPAddress").text))
+      case None => None
+    }
   }
 }
 
@@ -135,8 +146,8 @@ class UPnPExternalIPProvider extends ExternalIPProvider {
         try {
           val externalIp = fetchExternalIp(url)
 
-          logger.info(s"external ip - $externalIp")
-          Some(externalIp)
+          logger.info(s"external ip - ${externalIp.getOrElse("none")}")
+          externalIp
         } catch {
           case ex: Exception =>
             logger.severe(s"no external ip discovered! ${ex.getMessage}")
