@@ -35,16 +35,16 @@ object Scant {
     val daemon = if ( args.length == 1 ) { "-d".equals(args(0)) } else { false }
 
     do {
-      ipProvider.address match {
+      ipProvider.address() match {
         case None => logger.severe("unable to fetch external ip from router!") ; System.exit(1)
-        case Some(externalIp) => {
+        case Some(externalIp) =>
           val (host, domain) = hostAndDomain()
 
           logger.info(s"configured to update host '$host' for domain '$domain'")
 
           dnsProvider.address(host, domain) match {
             case None => logger.severe("unable to fetch host record from dns!") ; System.exit(1)
-            case Some(dnsIp) => {
+            case Some(dnsIp) =>
               val expected = externalIp
               val actual = dnsIp
 
@@ -52,8 +52,6 @@ object Scant {
                 logger.info(s"updating DNS with $expected")
                 ddnsProvider.update(host,domain,externalIp)
               }
-            }
-          }
         }
       }
       if (daemon) { TimeUnit.MINUTES.sleep(1L) }

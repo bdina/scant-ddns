@@ -74,12 +74,11 @@ object UPnPExternalIPProvider {
     import java.util.regex.Pattern
 
     val parsed = Pattern.compile("LOCATION: (?<value>.*?)\r\n").matcher(ssdpResponse)
-    parsed.find match {
-      case true => Some(parsed.group(1))
-      case false => {
-        logger.severe("unable to find control location on network!")
-        None
-      }
+    if ( parsed.find ) {
+      Some(parsed.group(1))
+    } else {
+      logger.severe("unable to find control location on network!")
+      None
     }
   }
 
@@ -105,9 +104,9 @@ object UPnPExternalIPProvider {
     })
 
     ctl_url match {
-      case Some(url) =>
+      case Some(_) =>
         val headers = ("SOAPAction", soapAction) :: Nil
-        val ctrlContent = httpPost(url, soapBody, headers)
+        val ctrlContent = httpPost(_, soapBody, headers)
 
         val ctrlXml = XML.loadString(ctrlContent.toString)
         Some(InetAddress.getByName((ctrlXml \\ "NewExternalIPAddress").text))
@@ -153,10 +152,9 @@ class UPnPExternalIPProvider extends ExternalIPProvider {
             logger.severe(s"no external ip discovered! ${ex.getMessage}")
             None
         }
-      case None => {
+      case None =>
         logger.severe("no external ip discovered!")
         None
-      }
     }
   }
 }
