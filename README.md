@@ -11,7 +11,7 @@ gradle uberJar
 ```
 2. execute graalvm `native-image` from the command line:
 ```
-native-image --enable-url-protocols=http,https -H:ReflectionConfigurationFiles=reflectconfig -jar build/libs/scant-ddns-1.0.jar
+native-image --enable-url-protocols=http,https -H:ReflectionConfigurationFiles=reflectconfig -jar build/libs/ddns-1.0.jar
 ```
 *or*
 execute a docker build (no uberJar build step required):
