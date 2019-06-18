@@ -36,14 +36,14 @@ object Scant {
 
     do {
       ipProvider.address() match {
-        case None => logger.severe("unable to fetch external ip from router!") ; System.exit(1)
+        case None => logger.severe("unable to fetch external ip from router!")
         case Some(externalIp) =>
           val (host, domain) = hostAndDomain()
 
           logger.info(s"configured to update host '$host' for domain '$domain'")
 
           dnsProvider.address(host, domain) match {
-            case None => logger.severe("unable to fetch host record from dns!") ; System.exit(1)
+            case None => logger.severe("unable to fetch host record from dns!")
             case Some(dnsIp) =>
               val expected = externalIp
               val actual = dnsIp
