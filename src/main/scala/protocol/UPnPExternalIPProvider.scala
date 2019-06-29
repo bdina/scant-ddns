@@ -121,7 +121,7 @@ class UPnPExternalIPProvider extends ExternalIPProvider {
 
   import UPnPExternalIPProvider._
 
-  def address(): Option[InetAddress] = {
+  override def address(): Option[InetAddress] = {
 
     val ssdpRequestBytes = ssdpRequest.getBytes
 
