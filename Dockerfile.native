@@ -3,7 +3,7 @@
 ARG GRAALVM_VERSION=19.0.2
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
-ARG DDNS_VERSION=1.0
+ARG DDNS_VERSION=1.1
 
 # Multi-stage image ... creates an intermediate layer for doing the graalvm native
 # build (this is discarded by docker post-build)
@@ -53,5 +53,5 @@ COPY --from=build ${GRAALVM_WORKDIR}/ddns* ${DDNS_HOME}/
 
 # And we finally create the application layer
 FROM ddns-scratch AS ddns
-ENTRYPOINT [ "./ddns-1.0" ]
+ENTRYPOINT [ "./ddns-1.1" ]
 CMD [ "-d" ]
