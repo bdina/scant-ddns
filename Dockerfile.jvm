@@ -1,4 +1,49 @@
-FROM openjdk:8-jre-alpine
-WORKDIR /opt/ddns/
-COPY ./build/libs/upnp-sandbox-1.0.jar ./ddns.jar
-CMD [ "java" , "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns.jar" , "-d" ]
+# To build image Run `docker build --tag ddns:latest .`
+
+ARG OPENJDK_VERSION=8
+ARG OPENJDK_WORKDIR=/openjdk/src/project
+
+ARG DDNS_VERSION=1.1
+
+# Multi-stage image ... creates an intermediate layer for doing the openjdk
+# build (this is discarded by docker post-build)
+FROM openjdk:${OPENJDK_VERSION}-jdk-alpine AS build
+
+ARG GRADLE_VERSION=5.4.1
+ARG DDNS_VERSION
+
+# Install tools required for project
+# Run `docker build --no-cache .` to update dependencies
+RUN apk update \
+ && apk add wget unzip \
+ && wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -P /tmp \
+ && unzip -d /opt/gradle /tmp/gradle-${GRADLE_VERSION}-bin.zip
+
+ENV GRADLE_HOME=/opt/gradle/gradle-${GRADLE_VERSION} \
+    PATH=${GRADLE_HOME}/bin:${PATH}
+
+WORKDIR /openjdk/src/project
+
+# Copy the entire project and build it
+# This layer is rebuilt when a file changes in the project directory
+COPY . /openjdk/src/project
+RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon uberJar
+
+# This results in a single layer image
+#FROM alpine AS ddns
+FROM openjdk:${OPENJDK_VERSION}-jre-alpine AS ddns-base
+
+ARG OPENJDK_WORKDIR
+ARG DDNS_VERSION
+
+ENV DDNS_HOME=/opt/ddns \
+    PATH=${DDNS_HOME}/bin:${PATH}
+
+WORKDIR ${DDNS_HOME}
+
+COPY --from=build ${OPENJDK_WORKDIR}/ddns* ${OPENJDK_WORKDIR}/build/libs/* ${DDNS_HOME}/
+
+# And we finally create the application layer
+FROM ddns-base AS ddns
+ENTRYPOINT [ "java" ]
+CMD [ "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns-1.1.jar" , "-d" ]
