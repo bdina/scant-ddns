@@ -28,7 +28,7 @@ object Scant {
 
     import java.util.concurrent.TimeUnit
 
-    val ipProvider   = new UPnPExternalIPProvider()
+    val ipProvider   = IpProviderFactory.create()
     val dnsProvider  = new SimpleDNSProvider()
     val ddnsProvider = new NamecheapDDNSProvider()
 
@@ -56,5 +56,15 @@ object Scant {
       }
       if (daemon) { TimeUnit.MINUTES.sleep(1L) }
     } while (daemon)
+  }
+}
+
+object IpProviderFactory {
+  def create(): ExternalIPProvider = {
+    Scant.configuration().getProperty("ip.provider", "upnp") match {
+      case "upnp" => new UPnPExternalIPProvider()
+      case "opendns" => new OpenDNSExternalIPProvider()
+      case _ => new UPnPExternalIPProvider()
+    }
   }
 }
