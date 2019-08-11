@@ -6,8 +6,8 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.scala-lang' , name: 'scala-library'  , version: '2.12.8'
-    compile group: 'org.scala-lang' , name: 'scala-compiler' , version: '2.12.8'
+    compile group: 'org.scala-lang' , name: 'scala-library'  , version: '2.12.9'
+    compile group: 'org.scala-lang' , name: 'scala-compiler' , version: '2.12.9'
 }
 
 sourceCompatibility = 1.8
