@@ -33,12 +33,15 @@ RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon uberJar \
     --no-server \
     --static \
     --enable-url-protocols=http,https \
+    --report-unsupported-elements-at-runtime \
+    --allow-incomplete-classpath \
+    --enable-all-security-services \
     -H:Name=ddns \
     -H:ReflectionConfigurationFiles=reflectconfig \
     -jar build/libs/ddns-${DDNS_VERSION}.jar
 
 # This results in a single layer image
-#FROM alpine AS ddns
+#FROM alpine AS ddns-alpine
 FROM scratch AS ddns-scratch
 
 ARG GRAALVM_WORKDIR
@@ -52,6 +55,7 @@ WORKDIR ${DDNS_HOME}
 COPY --from=build ${GRAALVM_WORKDIR}/ddns* ${DDNS_HOME}/
 
 # And we finally create the application layer
+#FROM ddns-alpine AS ddns
 FROM ddns-scratch AS ddns
 ENTRYPOINT [ "./ddns-1.1" ]
 CMD [ "-d" ]
