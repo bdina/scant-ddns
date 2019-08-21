@@ -9,12 +9,12 @@ this project requires `Java 8` and `Scala 2.12.9`
 ```
 gradle uberJar
 ```
-2. execute graalvm `native-image` from the command line:
+2. execute graalvm `native-image` from the command line, for example:
 ```
-native-image --enable-url-protocols=http,https -H:ReflectionConfigurationFiles=reflectconfig -jar build/libs/ddns-1.0.jar
+native-image --enable-url-protocols=http,https -H:ReflectionConfigurationFiles=reflectconfig -jar build/libs/ddns-<version>.jar
 ```
 *or*
 execute a docker build (no uberJar build step required):
 ```
-docker build -f Dockerfile.native .
+docker build -f Dockerfile.native --tag ddns:<version> .
 ```
