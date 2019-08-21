@@ -1,11 +1,11 @@
-# To build image Run `docker build --tag ddns:latest .`
+# To build image Run `docker build --tag ddns:<version> .`
 
 ARG GRAALVM_VERSION=19.1.1
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
 ARG DDNS_VERSION=1.1.1
 
-# Multi-stage image ... creates an intermediate layer for doing the graalvm native
+# Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
 FROM oracle/graalvm-ce:${GRAALVM_VERSION} AS build
 
@@ -33,16 +33,14 @@ RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon uberJar \
     --no-server \
     --static \
     --enable-url-protocols=http,https \
-    --report-unsupported-elements-at-runtime \
-    --allow-incomplete-classpath \
-    --enable-all-security-services \
     -H:Name=ddns \
     -H:ReflectionConfigurationFiles=reflectconfig \
     -jar build/libs/ddns-${DDNS_VERSION}.jar
 
-# This results in a single layer image
-#FROM alpine AS ddns-alpine
-FROM scratch AS ddns-scratch
+# Create a staging image (this will be part of the distribution)
+#FROM oracle/graalvm-ce:${GRAALVM_VERSION} AS dns-stage
+#FROM alpine AS dns-stage
+FROM scratch AS dns-stage
 
 ARG GRAALVM_WORKDIR
 ARG DDNS_VERSION
@@ -52,10 +50,20 @@ ENV DDNS_HOME=/opt/ddns \
 
 WORKDIR ${DDNS_HOME}
 
+# Graal substrate VM requires libnss (even when a static binary is built)
+# we copy the glibc version into the image - this is because both
+# Scratch and Alpine do NOT include a glibc runtime
+COPY --from=build /lib64/ld-linux-x86-64.so.2 \
+                  /lib64/libc.so.6 \
+                  /lib64/libnss_dns.so.2 \
+                  /lib64/libnss_files.so.2 \
+                  /lib64/libresolv.so.2 /lib64/
+
 COPY --from=build ${GRAALVM_WORKDIR}/ddns* ${DDNS_HOME}/
 
+CMD [ "/bin/sh" ]
+
 # And we finally create the application layer
-#FROM ddns-alpine AS ddns
-FROM ddns-scratch AS ddns
+FROM dns-stage AS dns
 ENTRYPOINT [ "./ddns-1.1.1" ]
 CMD [ "-d" ]
