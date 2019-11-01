@@ -28,14 +28,15 @@ class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServer()
   import java.net.{DatagramPacket, DatagramSocket}
   import java.time.Instant
 
+  import app.{Domain,Host}
   import client.SimpleDnsClient._
 
   private var cached_address: Option[(InetAddress,Instant)] = None
 
-  override def query(host: String, domain: String): Option[InetAddress] = {
+  override def query(host: Host, domain: Domain): Option[InetAddress] = {
     /** DNS QUERY **/
 
-    val fqdn = s"$host.$domain"
+    val fqdn = s"${host.name}.${domain.name}"
 
     val baos = new ByteArrayOutputStream()
     val dos = new DataOutputStream(baos)
@@ -152,7 +153,7 @@ class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServer()
     } else None
   }
 
-  override def address(host: String, domain: String): Option[InetAddress] = {
+  override def address(host: Host, domain: Domain): Option[InetAddress] = {
     cached_address match {
       case Some((address, ttl)) =>
         if (Instant.now().isBefore(ttl)) {

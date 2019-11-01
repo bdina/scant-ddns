@@ -17,5 +17,6 @@ class SimpleDNSProvider(val resolver: InetAddress = SimpleDNSProvider.dnsServer(
 
   val dnsClient = new SimpleDnsClient(resolver)
 
-  override def address(host: String, domain: String): Option[InetAddress] = dnsClient.address(host,domain)
+  import app.{Domain,Host}
+  override def address(host: Host, domain: Domain): Option[InetAddress] = dnsClient.address(host,domain)
 }

@@ -18,11 +18,11 @@ object Scant {
     properties
   }
 
-  def hostAndDomain(): (String, String) = {
+  def hostAndDomain(): (Host, Domain) = {
     val config = configuration()
     val host = config.getProperty("ddns.host" )
     val domain = config.getProperty("ddns.domain")
-    (host, domain)
+    (Host(host), Domain(domain))
   }
 
   def main(args: Array[String]): Unit = {
@@ -40,7 +40,7 @@ object Scant {
     val ddnsProvider = new NamecheapDDNSProvider()
 
     def ip_lookup = Future { ipProvider.address() }
-    def dns_lookup (host: String, domain: String) = Future { dnsProvider.address(host, domain) }
+    def dns_lookup (host: Host, domain: Domain) = Future { dnsProvider.address(host, domain) }
 
     val (host, domain) = hostAndDomain()
 

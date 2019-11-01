@@ -1,7 +1,8 @@
 package protocol
 
+import app.{Domain,Host}
 import java.net.InetAddress
 
 trait DNSProvider {
-  def address(host: String, domain: String): Option[InetAddress]
+  def address(host: Host, domain: Domain): Option[InetAddress]
 }

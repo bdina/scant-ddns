@@ -19,9 +19,10 @@ class NamecheapDDNSProvider extends DDNSProvider {
 
   import java.net.{HttpURLConnection,InetAddress,URL}
 
+  import app.{Domain,Host}
   import protocol.NamecheapDNSProvider._
 
-  override def update(host: String, domain: String, address: InetAddress): Unit = {
+  override def update(host: Host, domain: Domain, address: InetAddress): Unit = {
     val password = ddnsPassword()
 
     val queryParams = s"host=$host&domain=$domain&password=$password&ip=${address.toString}"
