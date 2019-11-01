@@ -1,6 +1,6 @@
 # To build image Run `docker build --tag ddns:<version> .`
 
-ARG GRAALVM_VERSION=19.2.0
+ARG GRAALVM_VERSION=19.2.1
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
 ARG DDNS_VERSION=1.1.2
