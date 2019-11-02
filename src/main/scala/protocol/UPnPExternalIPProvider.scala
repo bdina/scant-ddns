@@ -2,13 +2,10 @@ package protocol
 
 import java.io.{BufferedReader,DataOutputStream,InputStreamReader}
 import java.net.{InetAddress,HttpURLConnection,URL}
-import java.util.logging.Logger
 
-object UPnPExternalIPProvider {
+object UPnPExternalIPProvider extends app.ScantLogging {
 
   import app.Scant
-
-  val logger: Logger = Logger.getLogger(this.getClass.getName)
 
   val SsdpAddr: InetAddress = InetAddress.getByName("239.255.255.250")
   val SsdpPort: Integer = 1900
@@ -115,7 +112,7 @@ object UPnPExternalIPProvider {
   }
 }
 
-case class UPnPExternalIPProvider() extends ExternalIPProvider {
+case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLogging {
 
   import java.net.{DatagramPacket, DatagramSocket}
 

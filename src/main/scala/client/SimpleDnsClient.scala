@@ -1,14 +1,11 @@
 package client
 
 import java.net.InetAddress
-import java.util.logging.Logger
 
-object SimpleDnsClient {
+object SimpleDnsClient extends app.ScantLogging {
 
   import java.nio.ByteBuffer
   import java.util.concurrent.ThreadLocalRandom
-
-  val logger: Logger = Logger.getLogger(this.getClass.getName)
 
   val DefaultServerAddress: String = "8.8.8.8"
   val DnsServerPort: Integer = 53

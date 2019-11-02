@@ -4,11 +4,8 @@ import java.net.InetAddress
 
 import protocol._
 import java.util.Properties
-import java.util.logging.Logger
 
-object Scant {
-
-  val logger: Logger = Logger.getLogger(this.getClass.getName)
+object Scant extends ScantLogging {
 
   def configuration(): Properties = {
     import java.nio.file.{Files,Paths,StandardOpenOption}

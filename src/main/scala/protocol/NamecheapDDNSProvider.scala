@@ -1,10 +1,6 @@
 package protocol
 
-import java.util.logging.Logger
-
-object NamecheapDNSProvider {
-
-  val logger: Logger = Logger.getLogger(this.getClass.getName)
+object NamecheapDNSProvider extends app.ScantLogging {
 
   val DdnsUrlPrefix: String = "https://dynamicdns.park-your-domain.com/update"
 
