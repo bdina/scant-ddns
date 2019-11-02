@@ -1,11 +1,7 @@
 package app
 
-import java.net.InetAddress
-
-import protocol._
-import java.util.Properties
-
 object Scant extends App with ScantLogging {
+  import java.util.Properties
 
   def configuration(): Properties = {
     import java.nio.file.{Files,Paths,StandardOpenOption}
@@ -22,17 +18,20 @@ object Scant extends App with ScantLogging {
     (Host(host), Domain(domain))
   }
 
+  import protocol._
+
+  import java.net.InetAddress
   import java.util.concurrent.TimeUnit
-  import scala.concurrent.Await
-  import scala.concurrent.ExecutionContext.Implicits.global
-  import scala.concurrent.Future
-  import scala.concurrent.duration._
-  import scala.language.postfixOps
-  import scala.util.{Failure, Success}
 
   val ipProvider   = ExternalIPProvider()
   val dnsProvider  = SimpleDNSProvider()
   val ddnsProvider = NamecheapDDNSProvider()
+
+  import scala.concurrent.{Await,Future}
+  import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration._
+  import scala.language.postfixOps
+  import scala.util.{Failure, Success}
 
   def ip_lookup = Future { ipProvider.address() }
   def dns_lookup (host: Host, domain: Domain) = Future { dnsProvider.address(host, domain) }
