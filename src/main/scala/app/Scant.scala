@@ -1,5 +1,7 @@
 package app
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 object Scant extends App with ScantLogging {
   import java.util.Properties
 
@@ -18,31 +20,23 @@ object Scant extends App with ScantLogging {
     (Host(host), Domain(domain))
   }
 
-  import protocol._
-
-  import java.net.InetAddress
-  import java.util.concurrent.TimeUnit
-
-  val ipProvider   = ExternalIPProvider()
-  val dnsProvider  = SimpleDNSProvider()
-  val ddnsProvider = NamecheapDDNSProvider()
-
-  import scala.concurrent.{Await,Future}
-  import scala.concurrent.ExecutionContext.Implicits.global
-  import scala.concurrent.duration._
-  import scala.language.postfixOps
-  import scala.util.{Failure, Success}
-
-  def ip_lookup = Future { ipProvider.address() }
-  def dns_lookup (host: Host, domain: Domain) = Future { dnsProvider.address(host, domain) }
-
   val (host, domain) = hostAndDomain()
 
   val daemon = if ( args.length == 1 ) { "-d".equals(args(0)) } else { false }
 
+  import protocol._
+  implicit val dnsProvider = SimpleDNSProvider()
+
   do {
-    val externalIp = ip_lookup
-    val dnsIp      = dns_lookup(host, domain)
+    import java.net.InetAddress
+    import java.util.concurrent.TimeUnit
+
+    import scala.concurrent.Await
+    import scala.concurrent.duration._
+    import scala.util.{Failure, Success}
+
+    val externalIp = ExternalIPProvider.failover
+    val dnsIp      = DNSProvider.dns_lookup(host, domain)
 
     val result = for {
       host_ip <- externalIp
@@ -61,7 +55,8 @@ object Scant extends App with ScantLogging {
         value match {
           case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) =>
             if (!externalIp.equals(dnsIp)) {
-              logger.info(s"updating DNS with $externalIp")
+              val ddnsProvider = NamecheapDDNSProvider()
+              logger.info(s"updating DNS with $externalIp via $ddnsProvider")
               ddnsProvider.update(host, domain, externalIp)
             }
           case (None, Some(_)) => logger.severe("unable to fetch external IP!")
