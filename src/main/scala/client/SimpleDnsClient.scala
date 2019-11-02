@@ -22,7 +22,7 @@ object SimpleDnsClient {
   }
 }
 
-class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServer()) extends DnsClient {
+case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServer()) extends DnsClient {
 
   import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
   import java.net.{DatagramPacket, DatagramSocket}

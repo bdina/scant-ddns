@@ -15,7 +15,7 @@ object NamecheapDNSProvider {
   }
 }
 
-class NamecheapDDNSProvider extends DDNSProvider {
+case class NamecheapDDNSProvider() extends DDNSProvider {
 
   import java.net.{HttpURLConnection,InetAddress,URL}
 

@@ -115,7 +115,7 @@ object UPnPExternalIPProvider {
   }
 }
 
-class UPnPExternalIPProvider extends ExternalIPProvider {
+case class UPnPExternalIPProvider() extends ExternalIPProvider {
 
   import java.net.{DatagramPacket, DatagramSocket}
 

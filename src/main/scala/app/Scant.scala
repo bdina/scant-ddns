@@ -35,9 +35,9 @@ object Scant {
     import scala.language.postfixOps
     import scala.util.{Failure, Success}
 
-    val ipProvider   = IpProviderFactory.create()
-    val dnsProvider  = new SimpleDNSProvider()
-    val ddnsProvider = new NamecheapDDNSProvider()
+    val ipProvider   = ExternalIPProvider()
+    val dnsProvider  = SimpleDNSProvider()
+    val ddnsProvider = NamecheapDDNSProvider()
 
     def ip_lookup = Future { ipProvider.address() }
     def dns_lookup (host: Host, domain: Domain) = Future { dnsProvider.address(host, domain) }
@@ -77,15 +77,5 @@ object Scant {
         case Failure(exception) => logger.severe(s"unable to process: ${exception.getMessage}")
       }
     } while (daemon)
-  }
-}
-
-object IpProviderFactory {
-  def create(): ExternalIPProvider = {
-    Scant.configuration().getProperty("ip.provider", "upnp") match {
-      case "upnp" => new UPnPExternalIPProvider()
-      case "opendns" => new OpenDNSExternalIPProvider()
-      case _ => new UPnPExternalIPProvider()
-    }
   }
 }
