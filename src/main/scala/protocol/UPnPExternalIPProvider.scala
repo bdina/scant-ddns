@@ -101,9 +101,9 @@ object UPnPExternalIPProvider extends app.ScantLogging {
     })
 
     ctl_url match {
-      case Some(_) =>
+      case Some(ctlUrl) =>
         val headers = ("SOAPAction", soapAction) :: Nil
-        val ctrlContent = httpPost(_, soapBody, headers)
+        val ctrlContent = httpPost(ctlUrl, soapBody, headers)
 
         val ctrlXml = XML.loadString(ctrlContent.toString)
         Some(InetAddress.getByName((ctrlXml \\ "NewExternalIPAddress").text))
