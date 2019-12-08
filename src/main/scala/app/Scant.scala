@@ -44,6 +44,7 @@ object Scant extends App with ScantLogging {
     } yield (host_ip, dns_ip)
 
     if (!daemon) {
+      import scala.language.postfixOps
       Await.result(externalIp, 10 second)
       Await.result(dnsIp, 10 second)
     } else {
