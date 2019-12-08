@@ -18,6 +18,18 @@ application {
     mainClassName = 'app.Scant'
 }
 
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+                exclude '**/*.sample'
+        }
+    }
+}
+
 task repl(type:JavaExec) {
     main = "scala.tools.nsc.MainGenericRunner"
     classpath = sourceSets.main.runtimeClasspath

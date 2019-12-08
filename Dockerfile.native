@@ -35,7 +35,6 @@ RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon uberJar \
     --static \
     --enable-url-protocols=http,https \
     -H:Name=ddns \
-    -H:ReflectionConfigurationFiles=reflectconfig \
     -jar build/libs/ddns-${DDNS_VERSION}.jar
 
 # Create a staging image (this will be part of the distribution)
