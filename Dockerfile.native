@@ -16,7 +16,7 @@ ARG DDNS_VERSION
 # Install tools required for project
 # Run `docker build --no-cache .` to update dependencies
 RUN gu install native-image \
- && yum install -y wget unzip \
+ && yum install -y wget unzip libstdc++-static \
  && rm -rf /var/cache/yum \
  && wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -P /tmp \
  && unzip -d /opt/gradle /tmp/gradle-${GRADLE_VERSION}-bin.zip
