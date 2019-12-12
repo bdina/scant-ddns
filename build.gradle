@@ -1,3 +1,7 @@
+plugins {
+  id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+
 apply plugin: 'scala'
 apply plugin: 'application'
 
@@ -25,17 +29,8 @@ task repl(type:JavaExec) {
     args '-usejavacp'
 }
 
-task uberJar(type: Jar) {
-    with jar
-
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-
-    manifest {
-        attributes 'Main-Class': project.mainClassName
-    }
-    from {
-        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
+shadowJar {
+    classifier = ''
 }
 
 compileScala { // or: tasks.withType(ScalaCompile)

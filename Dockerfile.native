@@ -29,7 +29,7 @@ WORKDIR /graalvm/src/project
 # Copy the entire project and build it
 # This layer is rebuilt when a file changes in the project directory
 COPY . /graalvm/src/project
-RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon uberJar \
+RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar \
  && ${JAVA_HOME}/bin/native-image \
     --no-server \
     --static \
