@@ -22,10 +22,12 @@ object Scant extends App with ScantLogging {
 
   val (host, domain) = hostAndDomain()
 
-  val daemon = if ( args.length == 1 ) { "-d".equals(args(0)) } else { false }
+  val daemon = if (args.length == 1) { "-d".equals(args(0)) } else { false }
 
   import protocol._
   implicit val dnsProvider = SimpleDNSProvider()
+
+  val ddnsProvider = NamecheapDDNSProvider()
 
   do {
     import java.net.InetAddress
@@ -35,18 +37,14 @@ object Scant extends App with ScantLogging {
     import scala.concurrent.duration._
     import scala.util.{Failure, Success}
 
-    val externalIp = ExternalIPProvider.failover
-    val dnsIp      = DNSProvider.dns_lookup(host, domain)
-
     val result = for {
-      host_ip <- externalIp
-      dns_ip <- dnsIp
+      host_ip <- ExternalIPProvider.failover
+      dns_ip <- DNSProvider.dns_lookup(host, domain)
     } yield (host_ip, dns_ip)
 
     if (!daemon) {
       import scala.language.postfixOps
-      Await.result(externalIp, 10 second)
-      Await.result(dnsIp, 10 second)
+      Await.result(result, 10 second)
     } else {
       TimeUnit.MINUTES.sleep(1L)
     }
@@ -56,7 +54,6 @@ object Scant extends App with ScantLogging {
         value match {
           case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) =>
             if (!externalIp.equals(dnsIp)) {
-              val ddnsProvider = NamecheapDDNSProvider()
               logger.info(s"updating DNS with $externalIp via $ddnsProvider")
               ddnsProvider.update(host, domain, externalIp)
             }
