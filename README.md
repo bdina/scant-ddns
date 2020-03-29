@@ -2,7 +2,7 @@
 A hardly sufficient Dynamic DNS updater
 
 ### Requirements
-this project requires `Java 8` and `Scala 2.12.10`
+this project requires `Java 8` and `Scala 2.12.11`
 
 ## Create a native image (of uberJar)
 1. use gradle to create a build of the uberJar:
