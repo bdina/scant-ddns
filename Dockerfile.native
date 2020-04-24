@@ -1,10 +1,10 @@
 # To build image Run `docker build --tag ddns:<version> .`
 
 ARG GRAALVM_VERSION=20.0.0
-ARG JAVA_VERSION=8
+ARG JAVA_VERSION=11
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
-ARG DDNS_VERSION=1.4.0
+ARG DDNS_VERSION=1.4.1
 
 # Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
@@ -65,5 +65,5 @@ CMD [ "/bin/sh" ]
 
 # And we finally create the application layer
 FROM dns-stage AS dns
-ENTRYPOINT [ "./ddns-1.4.0" ]
+ENTRYPOINT [ "./ddns" ]
 CMD [ "-d" ]

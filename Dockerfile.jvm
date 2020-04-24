@@ -1,15 +1,15 @@
 # To build image Run `docker build --tag ddns:<version> .`
 
-ARG OPENJDK_VERSION=8
+ARG OPENJDK_VERSION=11
 ARG OPENJDK_WORKDIR=/openjdk/src/project
 
-ARG DDNS_VERSION=1.4.0
+ARG DDNS_VERSION=1.4.1
 
 # Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
 FROM openjdk:${OPENJDK_VERSION}-jdk-alpine AS build
 
-ARG GRADLE_VERSION=6.2
+ARG GRADLE_VERSION=6.3
 ARG DDNS_VERSION
 
 # Install tools required for project
