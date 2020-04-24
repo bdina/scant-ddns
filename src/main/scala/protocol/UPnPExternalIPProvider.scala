@@ -18,7 +18,7 @@ object UPnPExternalIPProvider extends app.ScantLogging {
   val soapEnv: String = "http://schemas.xmlsoap.org/soap/envelope"
   val serviceNs: String = "urn:schemas-upnp-org:service:WANIPConnection:1"
 
-  val soapBody: String = """<?xml version="1.0"?>
+  val soapBody: String = s"""<?xml version="1.0"?>
                            |<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
                            |  <SOAP-ENV:Body>
                            |    $serviceNs
