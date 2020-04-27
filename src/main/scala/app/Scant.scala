@@ -50,17 +50,16 @@ object Scant extends App with ScantLogging {
     }
 
     result onComplete {
-      case Success(value) =>
-        value match {
-          case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) =>
-            if (!externalIp.equals(dnsIp)) {
-              logger.info(s"updating DNS with $externalIp via $ddnsProvider")
-              ddnsProvider.update(host, domain, externalIp)
-            }
-          case (None, Some(_)) => logger.severe("unable to fetch external IP!")
-          case (Some(_), None) => logger.severe("unable to fetch host record")
-          case (None, None) => logger.severe("unable to fetch external IP and host record")
-        }
+      case Success(value) => value match {
+        case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) if (!externalIp.equals(dnsIp)) =>
+          logger.info(s"externalIp:$externalIp :: dnsIp:$dnsIp - updating DNS via $ddnsProvider")
+          ddnsProvider.update(host, domain, externalIp)
+        case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) =>
+          logger.info(s"externalIp:$externalIp :: dnsIp:$dnsIp - nothing to update")
+        case (None, Some(_)) => logger.severe("unable to fetch external IP!")
+        case (Some(_), None) => logger.severe("unable to fetch host record")
+        case (None, None) => logger.severe("unable to fetch external IP and host record")
+      }
       case Failure(exception) => logger.severe(s"unable to process: ${exception.getMessage}")
     }
   } while (daemon)
