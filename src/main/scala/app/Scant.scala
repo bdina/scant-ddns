@@ -31,6 +31,8 @@ object Scant extends App with ScantLogging {
 
   val ddnsProvider = NamecheapDDNSProvider()
 
+  logger.info(s"Start $this - dns provider $dnsProvider :: ddns provider $ddnsProvider")
+
   do {
     import java.net.InetAddress
     import java.util.concurrent.TimeUnit
