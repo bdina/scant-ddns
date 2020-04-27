@@ -20,6 +20,8 @@ object Scant extends App with ScantLogging {
     (Host(host), Domain(domain))
   }
 
+  override def toString() = "Scant DDNS: a hardly sufficient Dynamic DNS updater"
+
   val (host, domain) = hostAndDomain()
 
   val daemon = if (args.length == 1) { "-d".equals(args(0)) } else { false }

@@ -30,4 +30,6 @@ case class NamecheapDDNSProvider() extends DDNSProvider {
 
     logger.fine(s"HTTP response --> ${ddnsCon.getResponseCode} ${ddnsCon.getResponseMessage}")
   }
+
+  override def toString() = "NameCheap Dynamic DNS provider"
 }
