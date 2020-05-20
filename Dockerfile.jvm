@@ -9,7 +9,7 @@ ARG DDNS_VERSION=1.4.1
 # build (this is discarded by docker post-build)
 FROM openjdk:${OPENJDK_VERSION}-jdk-alpine AS build
 
-ARG GRADLE_VERSION=6.3
+ARG GRADLE_VERSION=6.4.1
 ARG DDNS_VERSION
 
 # Install tools required for project
@@ -19,8 +19,8 @@ RUN apk update \
  && wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -P /tmp \
  && unzip -d /opt/gradle /tmp/gradle-${GRADLE_VERSION}-bin.zip
 
-ENV GRADLE_HOME=/opt/gradle/gradle-${GRADLE_VERSION} \
-    PATH=${GRADLE_HOME}/bin:${PATH}
+ENV GRADLE_HOME=/opt/gradle/gradle-${GRADLE_VERSION}
+ENV PATH=${GRADLE_HOME}/bin:${PATH}
 
 WORKDIR /openjdk/src/project
 
@@ -36,8 +36,8 @@ FROM openjdk:${OPENJDK_VERSION}-jre-alpine AS ddns-base
 ARG OPENJDK_WORKDIR
 ARG DDNS_VERSION
 
-ENV DDNS_HOME=/opt/ddns \
-    PATH=${DDNS_HOME}/bin:${PATH}
+ENV DDNS_HOME=/opt/ddns
+ENV PATH=${DDNS_HOME}/bin:${PATH}
 
 WORKDIR ${DDNS_HOME}
 
