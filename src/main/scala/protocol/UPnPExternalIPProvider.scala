@@ -143,14 +143,17 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
           val externalIp = fetchExternalIp(url)
 
           logger.info(s"external ip - ${externalIp.getOrElse("none")}")
+          socket.close()
           externalIp
         } catch {
           case ex: Exception =>
             logger.severe(s"no external ip discovered! ${ex.getMessage}")
+            socket.close()
             None
         }
       case None =>
         logger.severe("no external ip discovered!")
+        socket.close()
         None
     }
   }

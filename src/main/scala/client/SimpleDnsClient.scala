@@ -138,6 +138,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
       if ("" equals dnsIp) {
         logger.severe("dns response to question was nill")
+        dnssocket.close()
         None
       } else {
         val ip = dnsIp.substring(0, dnsIp.length - 1)
@@ -145,9 +146,13 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
         val address = InetAddress.getByName(ip)
         logger.info(s"cache dns response for $ttl seconds")
         this.cached_address = Some((address, Instant.now.plusSeconds(ttl)))
+        dnssocket.close()
         Some(address)
       }
-    } else None
+    } else {
+      dnssocket.close()
+      None
+    }
   }
 
   override def address(host: Host, domain: Domain): Option[InetAddress] = {
