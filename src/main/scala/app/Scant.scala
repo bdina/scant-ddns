@@ -42,7 +42,7 @@ object Scant extends App with ScantLogging {
     import scala.util.{Failure, Success}
 
     val result = for {
-      host_ip <- ExternalIPProvider.failover
+      host_ip <- ExternalIPProvider.failover()
       dns_ip <- DNSProvider.dns_lookup(host, domain)
     } yield (host_ip, dns_ip)
 

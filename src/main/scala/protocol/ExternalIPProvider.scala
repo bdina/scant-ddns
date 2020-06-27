@@ -22,9 +22,9 @@ case object ExternalIPProvider {
   import scala.concurrent.Future
   def failover()(implicit ec: scala.concurrent.ExecutionContext): Future[Option[InetAddress]] = {
     Future {
-      upnp.address match {
+      upnp.address() match {
         case res @ Some(_) => res
-        case None => opendns.address
+        case None => opendns.address()
       }
     }
   }
