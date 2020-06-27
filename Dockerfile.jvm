@@ -3,7 +3,7 @@
 ARG OPENJDK_VERSION=11
 ARG OPENJDK_WORKDIR=/openjdk/src/project
 
-ARG DDNS_VERSION=1.4.1
+ARG DDNS_VERSION=1.4.2
 
 # Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
