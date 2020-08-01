@@ -1,7 +1,5 @@
 package app
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 object Scant extends App with ScantLogging {
   import java.util.Properties
 
@@ -33,38 +31,39 @@ object Scant extends App with ScantLogging {
 
   logger.info(s"Start $this - dns provider $dnsProvider :: ddns provider $ddnsProvider")
 
-  do {
-    import java.net.InetAddress
-    import java.util.concurrent.TimeUnit
+  import java.net.InetAddress
+  import scala.concurrent.Future
 
-    import scala.concurrent.Await
-    import scala.concurrent.duration._
-    import scala.util.{Failure, Success}
-
-    val result = for {
+  def execute: Future[Unit] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val fetch = for {
       host_ip <- ExternalIPProvider.failover()
       dns_ip <- DNSProvider.dns_lookup(host, domain)
     } yield (host_ip, dns_ip)
 
-    if (!daemon) {
-      import scala.language.postfixOps
-      Await.result(result, 10 second)
-    } else {
-      TimeUnit.MINUTES.sleep(1L)
+    fetch.map {
+      case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) if (!externalIp.equals(dnsIp)) =>
+        logger.info(s"externalIp:$externalIp :: dnsIp:$dnsIp - updating DNS via $ddnsProvider")
+        ddnsProvider.update(host, domain, externalIp)
+      case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) =>
+        logger.info(s"externalIp:$externalIp :: dnsIp:$dnsIp - nothing to update")
+      case (None, Some(_)) => logger.severe("unable to fetch external IP!")
+      case (Some(_), None) => logger.severe("unable to fetch host record")
+      case (None, None) => logger.severe("unable to fetch external IP and host record")
+    }.recover {
+      case exception => logger.severe(s"unable to process: ${exception.getMessage}")
     }
+  }
 
-    result onComplete {
-      case Success(value) => value match {
-        case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) if (!externalIp.equals(dnsIp)) =>
-          logger.info(s"externalIp:$externalIp :: dnsIp:$dnsIp - updating DNS via $ddnsProvider")
-          ddnsProvider.update(host, domain, externalIp)
-        case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) =>
-          logger.info(s"externalIp:$externalIp :: dnsIp:$dnsIp - nothing to update")
-        case (None, Some(_)) => logger.severe("unable to fetch external IP!")
-        case (Some(_), None) => logger.severe("unable to fetch host record")
-        case (None, None) => logger.severe("unable to fetch external IP and host record")
-      }
-      case Failure(exception) => logger.severe(s"unable to process: ${exception.getMessage}")
-    }
-  } while (daemon)
+  import scala.concurrent.duration._
+  if (!daemon) {
+    scala.concurrent.Await.result(execute, 10.seconds)
+  } else {
+    val exec = concurrent.ScheduledExecutionContext()
+    val duration = 1.minutes
+    val delay = 0.seconds
+    val cancelable = exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { execute }
+    logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
+    scala.concurrent.Await.result(cancelable, Duration.Inf)
+  }
 }
