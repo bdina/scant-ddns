@@ -55,15 +55,16 @@ object Scant extends App with ScantLogging {
     }
   }
 
+  import scala.concurrent.Await
   import scala.concurrent.duration._
   if (!daemon) {
-    scala.concurrent.Await.result(execute, 10.seconds)
+    Await.result(execute, 10.seconds)
   } else {
     val exec = concurrent.ScheduledExecutionContext()
     val duration = 1.minutes
     val delay = 0.seconds
     val cancelable = exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { execute }
     logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
-    scala.concurrent.Await.result(cancelable, Duration.Inf)
+    Await.result(cancelable, Duration.Inf)
   }
 }
