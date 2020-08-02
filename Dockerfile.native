@@ -65,4 +65,4 @@ CMD [ "/bin/sh" ]
 # And we finally create the application layer
 FROM dns-stage AS dns
 ENTRYPOINT [ "./ddns" ]
-CMD [ "-d" ]
+CMD [ "-Xmx5m" , "-d" ]
