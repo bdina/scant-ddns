@@ -136,7 +136,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
       logger.fine(s"DNS IP -> '$dnsIp'")
 
-      if ("" equals dnsIp) {
+      if (dnsIp == "") {
         logger.severe("dns response to question was nill")
         dnssocket.close()
         None

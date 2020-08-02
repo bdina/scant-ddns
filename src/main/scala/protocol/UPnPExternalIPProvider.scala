@@ -93,7 +93,7 @@ object UPnPExternalIPProvider extends app.ScantLogging {
         val serviceType = (svc \ "serviceType").text
         val controlUrl  = s"$baseUrl${ (svc \ "controlURL").text }"
         val scpdUrl     = s"$baseUrl${ (svc \ "SCPDURL").text }"
-        if ( WAN_IP_URN.equals(serviceType) ) {
+        if (serviceType == WAN_IP_URN) {
           ctl_url = Some(new URL(controlUrl))
           logger.fine(s"found WAN IP control url: $ctl_url")
         }

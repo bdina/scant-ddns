@@ -22,7 +22,7 @@ object Scant extends App with ScantLogging {
 
   val (host, domain) = hostAndDomain()
 
-  val daemon = if (args.length == 1) { "-d".equals(args(0)) } else { false }
+  val daemon = if (args.length == 1) args(0) == "-d" else false
 
   import protocol._
   implicit val dnsProvider = SimpleDNSProvider()
@@ -36,13 +36,13 @@ object Scant extends App with ScantLogging {
 
   def execute: Future[Unit] = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val fetch = for {
+    (for {
       host_ip <- ExternalIPProvider.failover()
       dns_ip <- DNSProvider.dns_lookup(host, domain)
-    } yield (host_ip, dns_ip)
-
-    fetch.map {
-      case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) if (!externalIp.equals(dnsIp)) =>
+    } yield {
+      (host_ip, dns_ip)
+    }).map {
+      case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) if (dnsIp != externalIp) =>
         logger.info(s"externalIp:$externalIp :: dnsIp:$dnsIp - updating DNS via $ddnsProvider")
         ddnsProvider.update(host, domain, externalIp)
       case (Some(externalIp: InetAddress), Some(dnsIp: InetAddress)) =>
