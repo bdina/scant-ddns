@@ -8,8 +8,8 @@ object UPnPExternalIPProvider extends app.ScantLogging {
   import app.Scant
 
   val SsdpAddr: InetAddress = InetAddress.getByName("239.255.255.250")
-  val SsdpPort: Integer = 1900
-  val SsdpMx: Integer = 2
+  val SsdpPort: Int = 1900
+  val SsdpMx: Int = 2
   val SsdpSt: String = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
 
   val ssdpRequest: String = s"M-SEARCH * HTTP/1.1\r\nHOST: $SsdpAddr:$SsdpPort\r\nMAN: 'ssdp:discover'\r\nMX: $SsdpMx\r\nST: $SsdpSt\r\n"

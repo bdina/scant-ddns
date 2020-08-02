@@ -8,7 +8,7 @@ object SimpleDnsClient extends app.ScantLogging {
   import java.util.concurrent.ThreadLocalRandom
 
   val DefaultServerAddress: String = "8.8.8.8"
-  val DnsServerPort: Integer = 53
+  val DnsServerPort: Int = 53
 
   def dnsServer(): InetAddress = InetAddress.getByName(DefaultServerAddress)
 
