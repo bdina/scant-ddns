@@ -4,7 +4,6 @@ import java.io.{BufferedReader,DataOutputStream,InputStreamReader}
 import java.net.{InetAddress,HttpURLConnection,URL}
 
 object UPnPExternalIPProvider extends app.ScantLogging {
-
   import app.Scant
 
   val SsdpAddr: InetAddress = InetAddress.getByName("239.255.255.250")
@@ -49,7 +48,7 @@ object UPnPExternalIPProvider extends app.ScantLogging {
     con.setRequestMethod("POST")
 
     con.setDoOutput(true)
-    headers.foreach{ h => con.setRequestProperty(h._1, h._2) }
+    headers.foreach { case h =>  con.setRequestProperty(h._1, h._2) }
     val wr = new DataOutputStream(con.getOutputStream)
     wr.writeBytes(body)
     wr.flush()
@@ -67,7 +66,6 @@ object UPnPExternalIPProvider extends app.ScantLogging {
   }
 
   def controlLocation(ssdpResponse: String): Option[String] = {
-
     import java.util.regex.Pattern
 
     val parsed = Pattern.compile("LOCATION: (?<value>.*?)\r\n").matcher(ssdpResponse)
@@ -82,7 +80,6 @@ object UPnPExternalIPProvider extends app.ScantLogging {
   val WAN_IP_URN = "urn:schemas-upnp-org:service:WANIPConnection:1"
 
   def fetchExternalIp(url: URL): Option[InetAddress] = {
-
     import scala.xml.XML
 
     val xml = XML.loadString(httpGet(url))
@@ -113,13 +110,11 @@ object UPnPExternalIPProvider extends app.ScantLogging {
 }
 
 case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLogging {
+  import UPnPExternalIPProvider._
 
   import java.net.{DatagramPacket, DatagramSocket}
 
-  import UPnPExternalIPProvider._
-
   override def address(): Option[InetAddress] = {
-
     val ssdpRequestBytes = ssdpRequest.getBytes
 
     val request =
