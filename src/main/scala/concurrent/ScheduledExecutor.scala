@@ -5,9 +5,11 @@ import java.util.concurrent._
 
 import scala.concurrent.{Promise,Future}
 
-case class ScheduledExecutionContext(corePoolSize: Int = Runtime.getRuntime.availableProcessors
-                                   , threadFactory: ThreadFactory = Executors.defaultThreadFactory
-                                   , rejectedHandler: RejectedExecutionHandler = ScheduledExecutionContext.defaultRejectedHandler) {
+case class ScheduledExecutionContext(
+    corePoolSize: Int = Runtime.getRuntime.availableProcessors
+  , threadFactory: ThreadFactory = ScheduledExecutionContext.defaultThreadFactory
+  , rejectedHandler: RejectedExecutionHandler = ScheduledExecutionContext.defaultRejectedHandler
+  ) {
   import scala.concurrent.duration.Duration
   import scala.util.Try
 
@@ -37,6 +39,28 @@ case class ScheduledExecutionContext(corePoolSize: Int = Runtime.getRuntime.avai
 }
 object ScheduledExecutionContext {
   private val defaultRejectedHandler: RejectedExecutionHandler = new AbortPolicy
+  private val defaultThreadFactory: ThreadFactory = new ScheduledThreadFactory
+
+  import java.util.concurrent.atomic.AtomicInteger
+  class ScheduledThreadFactory() extends ThreadFactory {
+    import ScheduledThreadFactory._
+    private val threadNumber = new AtomicInteger(1)
+
+    private val s = System.getSecurityManager()
+
+    private val group = if (s != null) s.getThreadGroup() else Thread.currentThread().getThreadGroup()
+    private val namePrefix = s"scala-execution-context-scheduled-${poolNumber.getAndIncrement()}-thread-"
+
+    def newThread(r: Runnable): Thread = {
+      val t = new Thread(group, r, s"$namePrefix${threadNumber.getAndIncrement()}", 0)
+      if (t.isDaemon()) t.setDaemon(false)
+      if (t.getPriority() != Thread.NORM_PRIORITY) t.setPriority(Thread.NORM_PRIORITY)
+      t
+    }
+  }
+  object ScheduledThreadFactory {
+    private val poolNumber = new AtomicInteger(1)
+  }
 }
 
 trait CancellableFuture[T] {
