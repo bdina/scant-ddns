@@ -26,7 +26,7 @@ case object ExternalIPProvider extends app.ScantLogging {
   }
 
   import scala.concurrent.Future
-  def failover()(implicit ec: scala.concurrent.ExecutionContext): Future[Option[InetAddress]] = {
+  def failover(secondary: ExternalIPProvider = opendns)(implicit ec: scala.concurrent.ExecutionContext): Future[Option[InetAddress]] = {
     Future {
       upnp.address() match {
         case res @ Some(_) => res
