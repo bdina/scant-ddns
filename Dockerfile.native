@@ -1,6 +1,6 @@
 # To build image run `docker build --tag ddns:<version> .`
 
-ARG GRAALVM_VERSION=20.1.0
+ARG GRAALVM_VERSION=20.3.0
 ARG JAVA_VERSION=11
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
@@ -10,7 +10,7 @@ ARG DDNS_VERSION=1.5.1
 # build (this is discarded by docker post-build)
 FROM oracle/graalvm-ce:${GRAALVM_VERSION}-java${JAVA_VERSION} AS build
 
-ARG GRADLE_VERSION=6.5.1
+ARG GRADLE_VERSION=6.7.1
 ARG DDNS_VERSION
 
 # Install tools required for project

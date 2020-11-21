@@ -9,7 +9,7 @@ ARG DDNS_VERSION=1.5.1
 # build (this is discarded by docker post-build)
 FROM openjdk:${OPENJDK_VERSION}-jdk-alpine AS build
 
-ARG GRADLE_VERSION=6.5.1
+ARG GRADLE_VERSION=6.7.1
 ARG DDNS_VERSION
 
 # Install tools required for project
@@ -46,4 +46,4 @@ COPY --from=build ${OPENJDK_WORKDIR}/ddns* ${OPENJDK_WORKDIR}/build/libs/* ${DDN
 # And we finally create the application layer
 FROM ddns-base AS ddns
 ENTRYPOINT [ "java" ]
-CMD [ "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns-1.4.0.jar" , "-d" ]
+CMD [ "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns-1.5.1.jar" , "-d" ]
