@@ -69,7 +69,7 @@ object UPnPExternalIPProvider extends app.ScantLogging {
     import java.util.regex.Pattern
 
     val parsed = Pattern.compile("LOCATION: (?<value>.*?)\r\n").matcher(ssdpResponse)
-    if ( parsed.find ) {
+    if (parsed.find()) {
       Some(parsed.group(1))
     } else {
       logger.severe("unable to find control location on network!")
@@ -130,6 +130,7 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
     socket.receive(response)
 
     val responseData = new String(response.getData).trim
+    socket.close()
 
     controlLocation(responseData) match {
       case Some(location) =>
@@ -138,16 +139,13 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
         Try(fetchExternalIp(url)) match {
           case Success(externalIp) =>
             logger.info(s"external ip - ${externalIp.getOrElse("none")}")
-            socket.close()
             externalIp
           case Failure(ex) =>
             logger.severe(s"no external ip discovered! ${ex.getMessage}")
-            socket.close()
             None
         }
-      case None =>
+      case _ =>
         logger.severe("no external ip discovered!")
-        socket.close()
         None
     }
   }
