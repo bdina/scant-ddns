@@ -1,6 +1,6 @@
 package app
 
-object Scant extends App with ScantLogging {
+object Scant extends App with ScantLogging with SystemManagement {
   import java.util.Properties
 
   def configuration(): Properties = {
@@ -18,6 +18,11 @@ object Scant extends App with ScantLogging {
     (Host(host), Domain(domain))
   }
 
+  def logMemoryStats(): Unit = {
+    val stats = memoryStats
+    logger.info(s"MEMORY - Used ${stats.used} MB :: Free ${stats.free} MB :: Total ${stats.total} MB :: Max ${stats.max} MB")
+  }
+
   override def toString() = "Scant DDNS: a hardly sufficient Dynamic DNS updater"
 
   val (host, domain) = hostAndDomain()
@@ -29,7 +34,7 @@ object Scant extends App with ScantLogging {
 
   val ddnsProvider = NamecheapDDNSProvider()
 
-  logger.info(s"Start $this - dns provider $dnsProvider :: ddns provider $ddnsProvider")
+  logger.info(s"Start $this ($availableProcessors cpu cores) - dns provider $dnsProvider :: ddns provider $ddnsProvider")
 
   import java.net.InetAddress
   import scala.concurrent.Future
@@ -55,16 +60,30 @@ object Scant extends App with ScantLogging {
     }
   }
 
+  def cleanup: Future[Unit] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    Future {
+      logger.info("trigger GC")
+      memoryCleanup()
+      logMemoryStats()
+    }
+  }
+
   import scala.concurrent.Await
   import scala.concurrent.duration._
   if (!daemon) {
     Await.result(execute, 10.seconds)
   } else {
-    val exec = concurrent.ScheduledExecutionContext(corePoolSize=1)
+    val exec = concurrent.ScheduledExecutionContext(corePoolSize=2)
+
     val duration = 1.minutes
     val delay = 0.seconds
-    val cancelable = exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { execute }
+
+    exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { cleanup }
+
     logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
+    val cancelable = exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { execute }
+
     Await.result(cancelable, Duration.Inf)
   }
 }

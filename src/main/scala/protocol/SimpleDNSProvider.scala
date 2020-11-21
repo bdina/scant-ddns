@@ -13,9 +13,10 @@ object SimpleDNSProvider {
     InetAddress.getByName(Scant.configuration().getProperty("dns.server.ip", DefaultServerAddress))
 }
 
-case class SimpleDNSProvider(val resolver: InetAddress = SimpleDNSProvider.dnsServer()) extends DNSProvider {
+case class SimpleDNSProvider(val resolver: InetAddress = SimpleDNSProvider.dnsServer()) extends DNSProvider with app.ScantLogging {
 
   val dnsClient = SimpleDnsClient(resolver)
+  logger.info(s"CREATED with resolver: $resolver")
 
   import app.{Domain,Host}
   override def address(host: Host, domain: Domain): Option[InetAddress] = dnsClient.address(host,domain)

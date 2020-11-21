@@ -5,7 +5,7 @@ import java.net.InetAddress
 trait ExternalIPProvider {
   def address(): Option[InetAddress]
 }
-case object ExternalIPProvider {
+case object ExternalIPProvider extends app.ScantLogging {
 
   lazy val upnp = UPnPExternalIPProvider()
   lazy val opendns = OpenDNSExternalIPProvider()
@@ -13,9 +13,15 @@ case object ExternalIPProvider {
   def apply(): ExternalIPProvider = {
     import app.Scant
     Scant.configuration().getProperty("ip.provider", "upnp") match {
-      case "upnp" => upnp
-      case "opendns" => opendns
-      case _ => upnp
+      case "upnp" =>
+        logger.info("CONFIGURED for UPnP external IP provider")
+        upnp
+      case "opendns" =>
+        logger.info("CONFIGURED for OpenDNS external IP provider")
+        opendns
+      case _ =>
+        logger.info("CONFIGURED (default) for UPnP external IP provider")
+        upnp
     }
   }
 
@@ -24,7 +30,9 @@ case object ExternalIPProvider {
     Future {
       upnp.address() match {
         case res @ Some(_) => res
-        case None => opendns.address()
+        case None =>
+          logger.info("FAILOVER to use OpenDNS reverse resolution to find IP")
+          secondary.address()
       }
     }
   }

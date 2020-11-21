@@ -19,7 +19,9 @@ object SimpleDnsClient extends app.ScantLogging {
   }
 }
 
-case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServer()) extends DnsClient {
+case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServer()) extends DnsClient with app.ScantLogging {
+
+  logger.info(s"CREATED with resolver: $dnsResolver")
 
   import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
   import java.net.{DatagramPacket, DatagramSocket}
@@ -156,6 +158,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
   }
 
   override def address(host: Host, domain: Domain): Option[InetAddress] = {
+    logger.info(s"call to address with host $host and domain $domain")
     cached_address match {
       case Some((address, ttl)) =>
         if (Instant.now().isBefore(ttl)) {
