@@ -34,6 +34,9 @@ RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar \
  && ${JAVA_HOME}/bin/native-image \
     --no-server \
     --static \
+    -R:MinHeapSize=1m \
+    -R:MaxHeapSize=3m \
+    -R:MaxNewSize=1m \
     -jar build/libs/ddns-${DDNS_VERSION}.jar
 
 # Create a staging image (this will be part of the distribution)
@@ -65,4 +68,4 @@ CMD [ "/bin/sh" ]
 # And we finally create the application layer
 FROM dns-stage AS dns
 ENTRYPOINT [ "./ddns" ]
-CMD [ "-Xmx5m" , "-XX:+PrintGC" , "-XX:+VerboseGC" , "-d" ]
+CMD [ "-XX:+PrintGC" , "-XX:+VerboseGC" , "-d" ]
