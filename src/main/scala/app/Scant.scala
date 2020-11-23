@@ -42,6 +42,7 @@ object Scant extends App with ScantLogging with SystemManagement {
 
   def execute: Future[Unit] = {
     import scala.concurrent.ExecutionContext.Implicits.global
+    logMemoryStats()
     (for {
       host_ip <- ExternalIPProvider.failover(failoverProvider)
       dns_ip <- DNSProvider.dns_lookup(host, domain)
@@ -61,15 +62,6 @@ object Scant extends App with ScantLogging with SystemManagement {
     }
   }
 
-  def cleanup: Future[Unit] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    Future {
-      logger.info("trigger GC")
-      memoryCleanup()
-      logMemoryStats()
-    }
-  }
-
   import scala.concurrent.Await
   import scala.concurrent.duration._
   if (!daemon) {
@@ -79,8 +71,6 @@ object Scant extends App with ScantLogging with SystemManagement {
 
     val duration = 1.minutes
     val delay = 0.seconds
-
-    exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { cleanup }
 
     logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
     val cancelable = exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { execute }
