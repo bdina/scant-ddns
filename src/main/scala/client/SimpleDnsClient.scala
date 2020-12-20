@@ -10,7 +10,7 @@ object SimpleDnsClient extends app.ScantLogging {
   val DefaultServerAddress: String = "8.8.8.8"
   val DnsServerPort: Int = 53
 
-  def dnsServer(): InetAddress = InetAddress.getByName(DefaultServerAddress)
+  def dnsServerAddress(): InetAddress = InetAddress.getByName(DefaultServerAddress)
 
   def clientId(): Short = {
     val clientIdBytes = new Array[Byte](2)
@@ -19,7 +19,7 @@ object SimpleDnsClient extends app.ScantLogging {
   }
 }
 
-case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServer()) extends DnsClient with app.ScantLogging {
+case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServerAddress()) extends DnsClient with app.ScantLogging {
 
   logger.info(s"CREATED with resolver: $dnsResolver")
 

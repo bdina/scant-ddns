@@ -26,7 +26,7 @@ object UPnPExternalIPProvider extends app.ScantLogging {
 
   val soapAction: String = "urn:schemas-upnp-org:service:WANIPConnection:1#GetExternalIPAddress"
 
-  def routerIp(): InetAddress = InetAddress.getByName(Scant.configuration().getProperty("router.ip"))
+  def routerAddress(): InetAddress = InetAddress.getByName(Scant.configuration().getProperty("router.ip"))
 
   def httpGet(url: URL): String = {
     val con = url.openConnection().asInstanceOf[HttpURLConnection]

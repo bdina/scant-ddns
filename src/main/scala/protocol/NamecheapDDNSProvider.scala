@@ -21,14 +21,14 @@ case class NamecheapDDNSProvider() extends DDNSProvider {
   override def update(host: Host, domain: Domain, address: InetAddress): Unit = {
     val password = ddnsPassword()
 
-    val queryParams = s"host=$host&domain=$domain&password=$password&ip=${address.toString}"
+    val queryParams = s"host=${host.name}&domain=${domain.name}&password=$password&ip=${address.getHostAddress}"
     val ddnsUpdate = s"$DdnsUrlPrefix?$queryParams"
 
-    val ddnsUrl= new URL(ddnsUpdate)
-    val ddnsCon = ddnsUrl.openConnection().asInstanceOf[HttpURLConnection]
-    ddnsCon.setRequestMethod("GET")
+    val ddnsUrl = new URL(ddnsUpdate)
+    val ddnsConn = ddnsUrl.openConnection().asInstanceOf[HttpURLConnection]
+    ddnsConn.setRequestMethod("GET")
 
-    logger.fine(s"HTTP response --> ${ddnsCon.getResponseCode} ${ddnsCon.getResponseMessage}")
+    logger.finer(s"HTTP query => $queryParams :: URL => $ddnsUpdate :: response --> ${ddnsConn.getResponseCode} ${ddnsConn.getResponseMessage}")
   }
 
   override def toString() = "NameCheap Dynamic DNS provider"
