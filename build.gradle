@@ -22,7 +22,7 @@ dependencies {
     implementation group: 'org.scalameta', name: 'svm-subs_2.13', version: '20.2.0'
 }
 
-version = '1.6.3'
+version = '1.6.4'
 
 application {
     mainClassName = 'app.Scant'
