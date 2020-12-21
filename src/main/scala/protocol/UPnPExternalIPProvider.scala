@@ -138,7 +138,7 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
         import scala.util.{Failure,Success,Try}
         Try(fetchExternalIp(url)) match {
           case Success(externalIp) =>
-            logger.info(s"external ip - ${externalIp.getOrElse("none")}")
+            logger.info(s"external ip - ${externalIp.map(_.getHostAddress).getOrElse("none")}")
             externalIp
           case Failure(ex) =>
             logger.severe(s"no external ip discovered! ${ex.getMessage}")
