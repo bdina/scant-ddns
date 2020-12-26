@@ -9,11 +9,20 @@ case class ScheduledExecutionContext(
     corePoolSize: Int = Runtime.getRuntime.availableProcessors
   , threadFactory: ThreadFactory = ScheduledExecutionContext.defaultThreadFactory
   , rejectedHandler: RejectedExecutionHandler = ScheduledExecutionContext.defaultRejectedHandler
-  ) {
+  ) extends scala.concurrent.ExecutionContext with app.ScantLogging {
   import scala.concurrent.duration.Duration
   import scala.util.Try
 
   private val execSrvc: ScheduledExecutorService = new ScheduledThreadPoolExecutor(corePoolSize, threadFactory, rejectedHandler)
+
+  def execute(runnable: Runnable): Unit = execSrvc.schedule(runnable, Duration.Zero.length, Duration.Zero.unit)
+
+  def reportFailure(cause: Throwable): Unit = logger.severe(s"failure ${cause.getMessage}")
+
+  def shutdown(timeout: Long = 0, unit: TimeUnit = TimeUnit.SECONDS): Unit = {
+    execSrvc.awaitTermination(timeout, unit)
+    execSrvc.shutdown()
+  }
 
   def schedule[T](by: Duration)(operation: => T): CancellableFuture[T] = {
     val promise = Promise[T]()

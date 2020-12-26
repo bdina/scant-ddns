@@ -40,8 +40,9 @@ object Scant extends App with ScantLogging with SystemManagement {
   import java.net.InetAddress
   import scala.concurrent.Future
 
+  implicit val exec = concurrent.ScheduledExecutionContext(corePoolSize=1)
+
   def execute: Future[Unit] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
     logMemoryStats()
     (for {
       host_ip <- ExternalIPProvider.failover(failoverProvider)
@@ -65,10 +66,9 @@ object Scant extends App with ScantLogging with SystemManagement {
   import scala.concurrent.Await
   import scala.concurrent.duration._
   if (!daemon) {
-    Await.result(execute, 10.seconds)
+    execute
+    exec.shutdown()
   } else {
-    val exec = concurrent.ScheduledExecutionContext(corePoolSize=1)
-
     val duration = 1.minutes
     val delay = 0.seconds
 
