@@ -21,7 +21,7 @@ object SimpleDnsClient extends app.ScantLogging {
 
 case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsServerAddress()) extends DnsClient with app.ScantLogging {
 
-  logger.info(s"CREATED with resolver: $dnsResolver")
+  logger.info(s"CREATED with resolver: ${dnsResolver.getHostAddress}")
 
   import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
   import java.net.{DatagramPacket, DatagramSocket}

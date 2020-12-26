@@ -16,8 +16,10 @@ object SimpleDNSProvider {
 case class SimpleDNSProvider(val resolver: InetAddress = SimpleDNSProvider.dnsServer()) extends DNSProvider with app.ScantLogging {
 
   val dnsClient = SimpleDnsClient(resolver)
-  logger.info(s"CREATED with resolver: $resolver")
+  logger.info(s"CREATED with resolver: ${resolver.getHostAddress}")
 
   import app.{Domain,Host}
   override def address(host: Host, domain: Domain): Option[InetAddress] = dnsClient.address(host,domain)
+
+  override def toString(): String = s"SimpleDNSProvider [ resolver ${resolver.getHostAddress} ]"
 }
