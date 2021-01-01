@@ -70,6 +70,12 @@ object ScheduledExecutionContext {
   object ScheduledThreadFactory {
     private val poolNumber = new AtomicInteger(1)
   }
+
+  final lazy val global = ScheduledExecutionContext(corePoolSize=1)
+
+  object Implicits {
+    implicit final def global: scala.concurrent.ExecutionContext = ScheduledExecutionContext.global
+  }
 }
 
 trait CancellableFuture[T] {
