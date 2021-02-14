@@ -51,7 +51,7 @@ object Scant extends App with ScantLogging with SystemManagement {
       (host_ip, dns_ip)
     }).map {
       case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) if (dnsAddress != externalAddress) =>
-        logger.info(s"externalAddress:$externalAddress :: dnsAddress:$dnsAddress - updating DNS via $ddnsProvider")
+        logger.info(s"externalAddress:${externalAddress.getHostAddress} :: dnsAddress:${dnsAddress.getHostAddress} - updating DNS via $ddnsProvider")
         ddnsProvider.update(host, domain, externalAddress)
       case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) =>
         logger.info(s"externalAddress:${externalAddress.getHostAddress} :: dnsAddress:${dnsAddress.getHostAddress} - nothing to update")
@@ -66,8 +66,7 @@ object Scant extends App with ScantLogging with SystemManagement {
   import scala.concurrent.Await
   import scala.concurrent.duration._
   if (!daemon) {
-    execute
-    exec.shutdown()
+    execute.onComplete { case _ => exec.shutdown() }
   } else {
     val duration = 1.minutes
     val delay = 0.seconds
