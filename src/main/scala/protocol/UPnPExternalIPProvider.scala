@@ -1,7 +1,7 @@
 package protocol
 
-import java.io.{BufferedReader,DataOutputStream,InputStreamReader}
-import java.net.{InetAddress,HttpURLConnection,URL}
+import java.net.{InetAddress,URL}
+import java.net.http.{HttpClient,HttpRequest,HttpResponse}
 
 object UPnPExternalIPProvider extends app.ScantLogging {
   import app.Scant
@@ -28,85 +28,63 @@ object UPnPExternalIPProvider extends app.ScantLogging {
 
   def routerAddress(): InetAddress = InetAddress.getByName(Scant.configuration().getProperty("router.ip"))
 
-  def httpGet(url: URL): String = {
-    val con = url.openConnection().asInstanceOf[HttpURLConnection]
-    con.setRequestMethod("GET")
+  lazy val httpClient: HttpClient = HttpClient.newBuilder().build()
 
-    val in = new BufferedReader(new InputStreamReader(con.getInputStream))
-    val content = new StringBuffer()
-    var inputLine = in.readLine()
-    do {
-      content.append(inputLine)
-      inputLine = in.readLine()
-    } while (inputLine != null)
-    in.close()
-    content.toString
+  import scala.util.Try
+  import scala.util.matching.Regex
+  import scala.xml.XML
+
+  def httpGet(url: URL): Try[String] = {
+    val request = HttpRequest.newBuilder(url.toURI).GET.build()
+    Try { httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body }
+  }
+  def getXML(url: URL): Try[xml.Elem] = httpGet(url).flatMap { case resp =>
+    logger.finest(s"fetched from URL (GET) => $resp")
+    Try(XML.loadString(resp))
   }
 
-  def httpPost(url: URL, body: String, headers: List[(String,String)]): String = {
-    val con = url.openConnection().asInstanceOf[HttpURLConnection]
-    con.setRequestMethod("POST")
-
-    con.setDoOutput(true)
-    headers.foreach { case h =>  con.setRequestProperty(h._1, h._2) }
-    val wr = new DataOutputStream(con.getOutputStream)
-    wr.writeBytes(body)
-    wr.flush()
-    wr.close()
-
-    val in = new BufferedReader(new InputStreamReader(con.getInputStream))
-    val content = new StringBuffer()
-    var inputLine = in.readLine()
-    do {
-      content.append(inputLine)
-      inputLine = in.readLine()
-    } while (inputLine != null)
-    in.close()
-    content.toString
+  def httpPost(url: URL, body: String, headers: List[(String,String)]): Try[String] = {
+    val _headers = headers.flatMap { case (a,b) => a :: List(b) }
+    val _body = HttpRequest.BodyPublishers.ofString(body)
+    val request = HttpRequest.newBuilder(url.toURI).headers(_headers:_*).POST(_body).build()
+    Try { httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body }
   }
-
-  def controlLocation(ssdpResponse: String): Option[String] = {
-    import java.util.regex.Pattern
-
-    val parsed = Pattern.compile("LOCATION: (?<value>.*?)\r\n").matcher(ssdpResponse)
-    if (parsed.find()) {
-      Some(parsed.group(1))
-    } else {
-      logger.severe("unable to find control location on network!")
-      None
+  def postXML(url: URL, body: String, headers: List[(String,String)]): Try[xml.Elem] =
+    httpPost(url, body, headers).flatMap { case resp =>
+      logger.finest(s"fetched from URL (POST) => $resp")
+      Try(XML.loadString(resp))
     }
-  }
+
+  val Location: Regex = """.*\r\nLOCATION: (?<value>.*?)\r\n""".r
+  def controlLocation(ssdpResponse: String): Option[URL] =
+    Location.findFirstMatchIn(ssdpResponse).map { case m => new URL(m.group("value")) }
 
   val WAN_IP_URN = "urn:schemas-upnp-org:service:WANIPConnection:1"
 
-  def fetchExternalIp(url: URL): Option[InetAddress] = {
-    import scala.xml.XML
-
-    val xml = XML.loadString(httpGet(url))
+  def fetchExternalIp(url: URL): Option[InetAddress] = getXML(url).map { case xml =>
     val baseUrl = s"http://${url.getHost}:${url.getPort}"
 
-    var ctl_url: Option[URL] = None
+    var ctrl_url: Option[URL] = None
     (xml \\ "service").foreach(svc => {
         val serviceType = (svc \ "serviceType").text
         val controlUrl  = s"$baseUrl${ (svc \ "controlURL").text }"
         val scpdUrl     = s"$baseUrl${ (svc \ "SCPDURL").text }"
         if (serviceType == WAN_IP_URN) {
-          ctl_url = Some(new URL(controlUrl))
-          logger.fine(s"found WAN IP control url: $ctl_url")
+          ctrl_url = Some(new URL(controlUrl))
+          logger.fine(s"found WAN IP control url: $ctrl_url")
         }
         logger.fine(s"$serviceType:\n  SCPD_URL: $scpdUrl\n  CTRL_URL: $controlUrl")
     })
 
-    ctl_url match {
-      case Some(ctlUrl) =>
-        val headers = ("SOAPAction", soapAction) :: Nil
-        val ctrlContent = httpPost(ctlUrl, soapBody, headers)
-
-        val ctrlXml = XML.loadString(ctrlContent.toString)
-        Some(InetAddress.getByName((ctrlXml \\ "NewExternalIPAddress").text))
-      case None => None
+    ctrl_url.flatMap { case ctrlUrl =>
+      val headers = ("SOAPAction", soapAction) :: Nil
+      postXML(ctrlUrl, soapBody, headers).map { case ctrlContent =>
+        val parsed = (ctrlContent \\ "NewExternalIPAddress").text
+        logger.info(s"external IP address => $parsed")
+        InetAddress.getByName(parsed)
+      }.toOption
     }
-  }
+  }.toOption.flatten
 }
 
 case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLogging {
@@ -132,21 +110,9 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
     val responseData = new String(response.getData).trim
     socket.close()
 
-    controlLocation(responseData) match {
-      case Some(location) =>
-        val url = new URL(location)
-        import scala.util.{Failure,Success,Try}
-        Try(fetchExternalIp(url)) match {
-          case Success(externalIp) =>
-            logger.info(s"external ip - ${externalIp.map(_.getHostAddress).getOrElse("none")}")
-            externalIp
-          case Failure(ex) =>
-            logger.severe(s"no external ip discovered! ${ex.getMessage}")
-            None
-        }
-      case _ =>
-        logger.severe("no external ip discovered!")
-        None
+    controlLocation(responseData).flatMap { case url =>
+      logger.finer(s"found control location => $url")
+      fetchExternalIp(url)
     }
   }
 }
