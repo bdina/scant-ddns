@@ -137,11 +137,14 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
   import client.SimpleDnsClient._
 
-  private var cached_address: Option[(InetAddress,Instant)] = None
+  private var cached_address: Option[(InetAddress,Instant,Request.Question)] = None
 
   override def query(host: Host, domain: Domain): Option[InetAddress] = {
-    def _query(host: Host, domain: Domain): Option[InetAddress] = {
-      val dnsFrame = Request.Question(host,domain).frame
+    def _query(host: Host
+             , domain: Domain
+             , question: Request.Question = Request.Question(host,domain)
+             ): Option[InetAddress] = {
+      val dnsFrame = question.frame
       logger.finer(s"Sending: ${dnsFrame.length} bytes")
       logger.finest(() => dnsFrame.map { case b => f"0x${b}%x" }.mkString(" "))
 
@@ -165,20 +168,20 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
         val address = response.address
         val ttl = response.ttl
         logger.info(s"cache DNS response for $ttl seconds")
-        this.cached_address = Some((address, Instant.now.plusSeconds(ttl)))
+        this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
         address
       }
     }
 
     logger.info(s"query DNS - fetch host [${host.name}] of domain [${domain.name}]")
-    cached_address.fold (_query(host,domain)) { case (address,ttl) =>
+    cached_address.fold (_query(host,domain)) { case (address,ttl,question) =>
       if (Instant.now().isBefore(ttl)) {
         logger.fine("CACHE HIT")
         Some(address)
       } else {
         logger.fine("cached value expired - invalidating")
         this.cached_address = None
-        _query(host, domain)
+        _query(host, domain, question)
       }
     }
   }
