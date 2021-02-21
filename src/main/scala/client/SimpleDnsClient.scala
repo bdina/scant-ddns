@@ -140,45 +140,45 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
   private var cached_address: Option[(InetAddress,Instant)] = None
 
   override def query(host: Host, domain: Domain): Option[InetAddress] = {
-    val dnsFrame = Request.Question(host,domain).frame
-    logger.finer(s"Sending: ${dnsFrame.length} bytes")
-    logger.finest(() => dnsFrame.map { case b => f"0x${b}%x" }.mkString(" "))
+    def _query(host: Host, domain: Domain): Option[InetAddress] = {
+      val dnsFrame = Request.Question(host,domain).frame
+      logger.finer(s"Sending: ${dnsFrame.length} bytes")
+      logger.finest(() => dnsFrame.map { case b => f"0x${b}%x" }.mkString(" "))
 
-    // *** Send DNS Request Frame ***
-    val dnssocket = new DatagramSocket()
-    logger.finest("sending question to DNS ...")
-    val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsResolver, DnsServerPort)
-    dnssocket.send(dnsReqPacket)
+      // *** Send DNS Request Frame ***
+      val dnssocket = new DatagramSocket()
+      logger.finest("sending question to DNS ...")
+      val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsResolver, DnsServerPort)
+      dnssocket.send(dnsReqPacket)
 
-    // Await response from DNS server
-    val buf = new Array[Byte](1024)
-    val packet = new DatagramPacket(buf, buf.length)
-    dnssocket.receive(packet)
+      // Await response from DNS server
+      val buf = new Array[Byte](1024)
+      val packet = new DatagramPacket(buf, buf.length)
+      dnssocket.receive(packet)
 
-    logger.finer(s"\n\nReceived: ${packet.getLength} bytes")
+      logger.finer(s"\n\nReceived: ${packet.getLength} bytes")
 
-    val dnsIp = Response.Question(buf)
-    dnssocket.close()
+      val dnsIp = Response.Question(buf)
+      dnssocket.close()
 
-    dnsIp.map { case response =>
-      val address = response.address
-      val ttl = response.ttl
-      logger.info(s"cache DNS response for $ttl seconds")
-      this.cached_address = Some((address, Instant.now.plusSeconds(ttl)))
-      address
+      dnsIp.map { case response =>
+        val address = response.address
+        val ttl = response.ttl
+        logger.info(s"cache DNS response for $ttl seconds")
+        this.cached_address = Some((address, Instant.now.plusSeconds(ttl)))
+        address
+      }
     }
-  }
 
-  override def address(host: Host, domain: Domain): Option[InetAddress] = {
     logger.info(s"query DNS - fetch host [${host.name}] of domain [${domain.name}]")
-    cached_address.fold (query(host,domain)) { case (address,ttl) =>
+    cached_address.fold (_query(host,domain)) { case (address,ttl) =>
       if (Instant.now().isBefore(ttl)) {
         logger.fine("CACHE HIT")
         Some(address)
       } else {
         logger.fine("cached value expired - invalidating")
         this.cached_address = None
-        query(host, domain)
+        _query(host, domain)
       }
     }
   }

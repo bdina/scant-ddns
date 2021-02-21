@@ -11,5 +11,5 @@ case class OpenDNSExternalIPProvider() extends ExternalIPProvider with app.Scant
   val dnsClient = SimpleDnsClient(InetAddress.getByName(resolver))
   logger.info(s"CREATED using resolver: $resolver")
 
-  override def address(): Option[InetAddress] = dnsClient.address(Host("myip"), Domain("opendns.com"))
+  override def address(): Option[InetAddress] = dnsClient.query(Host("myip"), Domain("opendns.com"))
 }
