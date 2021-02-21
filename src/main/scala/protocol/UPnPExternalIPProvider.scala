@@ -1,6 +1,6 @@
 package protocol
 
-import java.net.{InetAddress,URL}
+import java.net.{InetAddress,URI}
 import java.net.http.{HttpClient,HttpRequest,HttpResponse}
 
 object UPnPExternalIPProvider extends app.ScantLogging {
@@ -34,43 +34,43 @@ object UPnPExternalIPProvider extends app.ScantLogging {
   import scala.util.matching.Regex
   import scala.xml.XML
 
-  def httpGet(url: URL): Try[String] = {
-    val request = HttpRequest.newBuilder(url.toURI).GET.build()
+  def httpGet(uri: URI): Try[String] = {
+    val request = HttpRequest.newBuilder(uri).GET.build()
     Try { httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body }
   }
-  def getXML(url: URL): Try[xml.Elem] = httpGet(url).flatMap { case resp =>
+  def getXML(uri: URI): Try[xml.Elem] = httpGet(uri).flatMap { case resp =>
     logger.finest(s"fetched from URL (GET) => $resp")
     Try(XML.loadString(resp))
   }
 
-  def httpPost(url: URL, body: String, headers: List[(String,String)]): Try[String] = {
+  def httpPost(uri: URI, body: String, headers: List[(String,String)]): Try[String] = {
     val _headers = headers.flatMap { case (a,b) => a :: List(b) }
     val _body = HttpRequest.BodyPublishers.ofString(body)
-    val request = HttpRequest.newBuilder(url.toURI).headers(_headers:_*).POST(_body).build()
+    val request = HttpRequest.newBuilder(uri).headers(_headers:_*).POST(_body).build()
     Try { httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body }
   }
-  def postXML(url: URL, body: String, headers: List[(String,String)]): Try[xml.Elem] =
-    httpPost(url, body, headers).flatMap { case resp =>
+  def postXML(uri: URI, body: String, headers: List[(String,String)]): Try[xml.Elem] =
+    httpPost(uri, body, headers).flatMap { case resp =>
       logger.finest(s"fetched from URL (POST) => $resp")
       Try(XML.loadString(resp))
     }
 
   val Location: Regex = """.*\r\nLOCATION: (?<value>.*?)\r\n""".r
-  def controlLocation(ssdpResponse: String): Option[URL] =
-    Location.findFirstMatchIn(ssdpResponse).map { case m => new URL(m.group("value")) }
+  def controlLocation(ssdpResponse: String): Option[URI] =
+    Location.findFirstMatchIn(ssdpResponse).map { case m => new URI(m.group("value")) }
 
   val WAN_IP_URN = "urn:schemas-upnp-org:service:WANIPConnection:1"
 
-  def fetchExternalIp(url: URL): Option[InetAddress] = getXML(url).map { case xml =>
+  def fetchExternalIp(url: URI): Option[InetAddress] = getXML(url).map { case xml =>
     val baseUrl = s"http://${url.getHost}:${url.getPort}"
 
-    var ctrl_url: Option[URL] = None
+    var ctrl_url: Option[URI] = None
     (xml \\ "service").foreach(svc => {
         val serviceType = (svc \ "serviceType").text
         val controlUrl  = s"$baseUrl${ (svc \ "controlURL").text }"
         val scpdUrl     = s"$baseUrl${ (svc \ "SCPDURL").text }"
         if (serviceType == WAN_IP_URN) {
-          ctrl_url = Some(new URL(controlUrl))
+          ctrl_url = Some(new URI(controlUrl))
           logger.fine(s"found WAN IP control url: $ctrl_url")
         }
         logger.fine(s"$serviceType:\n  SCPD_URL: $scpdUrl\n  CTRL_URL: $controlUrl")
