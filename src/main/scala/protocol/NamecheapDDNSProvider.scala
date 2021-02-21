@@ -13,22 +13,32 @@ object NamecheapDNSProvider extends app.ScantLogging {
 
 case class NamecheapDDNSProvider() extends DDNSProvider {
 
-  import java.net.{HttpURLConnection,InetAddress,URL}
+  import java.net.{InetAddress,URI}
+  import java.net.http.{HttpClient,HttpRequest,HttpResponse}
 
   import app.{Domain,Host}
   import protocol.NamecheapDNSProvider._
 
+  import scala.util.Try
+
+  lazy val httpClient: HttpClient = HttpClient.newBuilder().build()
+
   override def update(host: Host, domain: Domain, address: InetAddress): Unit = {
+    def httpGet(uri: URI): Try[String] = {
+      val request = HttpRequest.newBuilder(uri).GET.build()
+      Try { httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body }
+    }
+
     val password = ddnsPassword()
 
     val queryParams = s"host=${host.name}&domain=${domain.name}&password=$password&ip=${address.getHostAddress}"
     val ddnsUpdate = s"$DdnsUrlPrefix?$queryParams"
 
-    val ddnsUrl = new URL(ddnsUpdate)
-    val ddnsConn = ddnsUrl.openConnection().asInstanceOf[HttpURLConnection]
-    ddnsConn.setRequestMethod("GET")
+    val ddnsUri = new URI(ddnsUpdate)
+    val ddnsResponse = httpGet(ddnsUri)
 
-    logger.finer(s"HTTP query => $queryParams :: URL => $ddnsUpdate :: response --> ${ddnsConn.getResponseCode} ${ddnsConn.getResponseMessage}")
+    logger.finer(s"HTTP query => $queryParams :: URL => $ddnsUpdate")
+    logger.info(s"DDNS update response --> ${ddnsResponse}")
   }
 
   override def toString() = "NameCheap Dynamic DNS provider"
