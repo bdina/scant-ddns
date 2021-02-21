@@ -13,20 +13,21 @@ object SimpleDnsClient extends app.ScantLogging {
 
   def dnsServerAddress(): InetAddress = InetAddress.getByName(DefaultServerAddress)
 
+  val clientIdBytes = new Array[Byte](2)
   def clientId(): Short = {
-    val clientIdBytes = new Array[Byte](2)
     ThreadLocalRandom.current.nextBytes(clientIdBytes)
     ByteBuffer.wrap(clientIdBytes).getShort
   }
 
   object Request {
     case class Question(host: Host, domain: Domain) {
-      val frame: Array[Byte] = {
+      val fqdn = s"${host.name}.${domain.name}"
+      val domainParts = fqdn.split("\\.")
+      logger.fine(s"$fqdn has ${domainParts.length} parts")
+      def frame(): Array[Byte] = {
         import java.io.{ByteArrayOutputStream, DataOutputStream}
 
-        val fqdn = s"${host.name}.${domain.name}"
-
-        val baos = new ByteArrayOutputStream()
+        val baos = new ByteArrayOutputStream(18 + domainParts.length)
         val dos = new DataOutputStream(baos)
 
         // *** Build a DNS Request Frame ****
@@ -50,9 +51,6 @@ object SimpleDnsClient extends app.ScantLogging {
         dos.writeShort(0x0000)
         // Additional Record Count: Specifies the number of resource records in the Additional section of the message.
         dos.writeShort(0x0000)
-
-        val domainParts = fqdn.split("\\.")
-        logger.fine(s"$fqdn has ${domainParts.length} parts")
 
         domainParts.foreach { case part =>
           logger.fine(s"Writing: ${part}")
@@ -144,7 +142,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
              , domain: Domain
              , question: Request.Question = Request.Question(host,domain)
              ): Option[InetAddress] = {
-      val dnsFrame = question.frame
+      val dnsFrame = question.frame()
       logger.finer(s"Sending: ${dnsFrame.length} bytes")
       logger.finest(() => dnsFrame.map { case b => f"0x${b}%x" }.mkString(" "))
 
