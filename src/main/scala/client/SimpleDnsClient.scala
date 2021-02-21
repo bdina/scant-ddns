@@ -118,9 +118,7 @@ object SimpleDnsClient extends app.ScantLogging {
             None
           } else {
             logger.info(s"DNS response to question was $dnsIp")
-            val address = InetAddress.getByName(dnsIp)
-            logger.info(s"cache DNS response for $ttl seconds")
-            Some(Question(address, ttl))
+            Some(Question(InetAddress.getByName(dnsIp), ttl))
           }
         } else {
           None
