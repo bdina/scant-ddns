@@ -14,28 +14,21 @@ object NamecheapDNSProvider extends app.ScantLogging {
 case class NamecheapDDNSProvider() extends DDNSProvider {
 
   import java.net.{InetAddress,URI}
-  import java.net.http.{HttpClient,HttpRequest,HttpResponse}
 
   import app.{Domain,Host}
   import protocol.NamecheapDNSProvider._
 
-  import scala.util.Try
-
-  lazy val httpClient: HttpClient = HttpClient.newBuilder().build()
+  import protocol.http._
+  import protocol.Http.httpClient
 
   override def update(host: Host, domain: Domain, address: InetAddress): Unit = {
-    def httpGet(uri: URI): Try[String] = {
-      val request = HttpRequest.newBuilder(uri).GET.build()
-      Try { httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body }
-    }
-
     val password = ddnsPassword()
 
     val queryParams = s"host=${host.name}&domain=${domain.name}&password=$password&ip=${address.getHostAddress}"
     val ddnsUpdate = s"$DdnsUrlPrefix?$queryParams"
 
     val ddnsUri = new URI(ddnsUpdate)
-    val ddnsResponse = httpGet(ddnsUri)
+    val ddnsResponse = httpClient.tryGet(ddnsUri)
 
     logger.finer(s"HTTP query => $queryParams :: URL => $ddnsUpdate")
     logger.info(s"DDNS update response --> ${ddnsResponse}")

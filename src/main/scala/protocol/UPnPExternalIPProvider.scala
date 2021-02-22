@@ -1,7 +1,6 @@
 package protocol
 
 import java.net.{InetAddress,URI}
-import java.net.http.{HttpClient,HttpRequest,HttpResponse}
 
 object UPnPExternalIPProvider extends app.ScantLogging {
   import app.Scant
@@ -28,29 +27,20 @@ object UPnPExternalIPProvider extends app.ScantLogging {
 
   def routerAddress(): InetAddress = InetAddress.getByName(Scant.configuration().getProperty("router.ip"))
 
-  lazy val httpClient: HttpClient = HttpClient.newBuilder().build()
-
   import scala.util.Try
   import scala.util.matching.Regex
   import scala.xml.XML
 
-  def httpGet(uri: URI): Try[String] = {
-    val request = HttpRequest.newBuilder(uri).GET.build()
-    Try { httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body }
-  }
-  def getXML(uri: URI): Try[xml.Elem] = httpGet(uri).flatMap { case resp =>
+  import protocol.http._
+  import protocol.Http.httpClient
+
+  def getXML(uri: URI): Try[xml.Elem] = httpClient.tryGet(uri).flatMap { case resp =>
     logger.finest(s"fetched from URL (GET) => $resp")
     Try(XML.loadString(resp))
   }
 
-  def httpPost(uri: URI, body: String, headers: List[(String,String)]): Try[String] = {
-    val _headers = headers.flatMap { case (a,b) => a :: List(b) }
-    val _body = HttpRequest.BodyPublishers.ofString(body)
-    val request = HttpRequest.newBuilder(uri).headers(_headers:_*).POST(_body).build()
-    Try { httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body }
-  }
   def postXML(uri: URI, body: String, headers: List[(String,String)]): Try[xml.Elem] =
-    httpPost(uri, body, headers).flatMap { case resp =>
+    httpClient.tryPost(uri, body, headers).flatMap { case resp =>
       logger.finest(s"fetched from URL (POST) => $resp")
       Try(XML.loadString(resp))
     }
