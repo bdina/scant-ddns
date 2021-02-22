@@ -3,7 +3,13 @@ package protocol
 import java.net.http.HttpClient
 
 object Http {
-  implicit lazy val httpClient: HttpClient = HttpClient.newBuilder().build()
+  import java.time.Duration
+  import java.util.concurrent.Executors
+  implicit lazy val httpClient: HttpClient = HttpClient.newBuilder()
+                                                       .followRedirects(HttpClient.Redirect.NORMAL)
+                                                       .connectTimeout(Duration.ofSeconds(10))
+                                                       .executor(Executors.newFixedThreadPool(1))
+                                                       .build()
 }
 
 package object http {
