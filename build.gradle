@@ -20,6 +20,12 @@ dependencies {
 
     // work-around for https://github.com/oracle/graal/issues/2761
     implementation group: 'org.scalameta', name: 'svm-subs_2.13', version: '20.2.0'
+
+    testImplementation group: 'org.scalatest', name: 'scalatest_2.13', version: '3.2.2'
+    testImplementation group: 'org.scalactic', name: 'scalactic_2.13', version: '3.2.2'
+
+    testImplementation group: 'junit', name: 'junit', version: '4.13' 
+    testImplementation group: 'org.scalatestplus', name: 'junit-4-12_2.13', version: '3.2.2.0'
 }
 
 version = '1.7.2'
