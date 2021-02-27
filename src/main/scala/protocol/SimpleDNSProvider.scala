@@ -6,7 +6,6 @@ import java.net.InetAddress
 import app.Scant
 
 object SimpleDNSProvider {
-
   val DefaultServerAddress: String = "8.8.8.8"
 
   def dnsServer(): InetAddress =
@@ -14,7 +13,6 @@ object SimpleDNSProvider {
 }
 
 case class SimpleDNSProvider(val resolver: InetAddress = SimpleDNSProvider.dnsServer()) extends DNSProvider with app.ScantLogging {
-
   val dnsClient = SimpleDnsClient(resolver)
   logger.info(s"CREATED with resolver: ${resolver.getHostAddress}")
 
