@@ -14,6 +14,8 @@ object System {
   val runtime = Runtime.getRuntime
 
   case class Stats(used: Long, free: Long, total: Long, max: Long)
+
+  def shutdownNow(code: Int = 0) = runtime.exit(code)
 }
 
 trait SystemManagement {
