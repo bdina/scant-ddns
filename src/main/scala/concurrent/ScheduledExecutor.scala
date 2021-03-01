@@ -21,7 +21,8 @@ case class ScheduledExecutionContext(
 
   def shutdown(timeout: Long = 0, unit: TimeUnit = TimeUnit.SECONDS): Unit = {
     execSrvc.awaitTermination(timeout, unit)
-    execSrvc.shutdown()
+    val cancelled = execSrvc.shutdownNow()
+    logger.info(s"$execSrvc shutdown NOW - cancelled ${cancelled.size} tasks")
   }
 
   def schedule[T](by: Duration)(operation: => T): CancellableFuture[T] = {
@@ -51,7 +52,7 @@ object ScheduledExecutionContext {
   private val defaultThreadFactory: ThreadFactory = new ScheduledThreadFactory
 
   import java.util.concurrent.atomic.AtomicInteger
-  class ScheduledThreadFactory() extends ThreadFactory {
+  class ScheduledThreadFactory() extends ThreadFactory with app.ScantLogging {
     import ScheduledThreadFactory._
     private val threadNumber = new AtomicInteger(1)
 
@@ -60,10 +61,11 @@ object ScheduledExecutionContext {
     private val group = if (s != null) s.getThreadGroup() else Thread.currentThread().getThreadGroup()
     private val namePrefix = s"scala-execution-context-scheduled-${poolNumber.getAndIncrement()}-thread-"
 
-    def newThread(r: Runnable): Thread = {
+    override def newThread(r: Runnable): Thread = {
       val t = new Thread(group, r, s"$namePrefix${threadNumber.getAndIncrement()}", 0)
       if (t.isDaemon()) t.setDaemon(false)
       if (t.getPriority() != Thread.NORM_PRIORITY) t.setPriority(Thread.NORM_PRIORITY)
+      logger.info(s"created $t")
       t
     }
   }
