@@ -34,9 +34,9 @@ RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar \
  && ${JAVA_HOME}/bin/native-image \
     --no-server \
     --static \
-    -R:MinHeapSize=3m \
-    -R:MaxHeapSize=6m \
-    -R:MaxNewSize=6m \
+    -R:MinHeapSize=5m \
+    -R:MaxHeapSize=5m \
+    -R:MaxNewSize=5m \
     -jar build/libs/ddns-${DDNS_VERSION}.jar
 
 # Create a staging image (this will be part of the distribution)
