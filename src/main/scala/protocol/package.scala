@@ -24,8 +24,8 @@ package object http {
       Try { hc.send(request, HttpResponse.BodyHandlers.ofString()).body }
     }
 
-    def tryPost(uri: URI, body: String, headers: List[(String,String)]): Try[String] = {
-      val _headers = headers.flatMap { case (a,b) => a :: List(b) }
+    def tryPost(uri: URI, body: String, headers: Map[String,String]): Try[String] = {
+      val _headers = headers.flatMap { case (k, v) => List(k, v) }.toSeq
       val _body = HttpRequest.BodyPublishers.ofString(body)
       val request = HttpRequest.newBuilder(uri).headers(_headers:_*).POST(_body).build()
       Try { hc.send(request, HttpResponse.BodyHandlers.ofString()).body }

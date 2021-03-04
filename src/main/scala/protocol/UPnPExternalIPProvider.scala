@@ -39,7 +39,7 @@ object UPnPExternalIPProvider extends app.ScantLogging {
     Try(XML.loadString(resp))
   }
 
-  def postXML(uri: URI, body: String, headers: List[(String,String)]): Try[xml.Elem] =
+  def postXML(uri: URI, body: String, headers: Map[String,String]): Try[xml.Elem] =
     httpClient.tryPost(uri, body, headers).flatMap { case resp =>
       logger.finest(s"fetched from URL (POST) => $resp")
       Try(XML.loadString(resp))
@@ -67,7 +67,7 @@ object UPnPExternalIPProvider extends app.ScantLogging {
     })
 
     ctrl_url.flatMap { case ctrlUrl =>
-      val headers = ("SOAPAction", soapAction) :: Nil
+      val headers = Map("SOAPAction" -> soapAction)
       postXML(ctrlUrl, soapBody, headers).map { case ctrlContent =>
         val parsed = (ctrlContent \\ "NewExternalIPAddress").text
         logger.info(s"external IP address => $parsed")
