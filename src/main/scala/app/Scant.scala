@@ -42,7 +42,7 @@ object Scant extends App with ScantLogging with SystemManagement {
 
   implicit val exec = concurrent.ScheduledExecutionContext(corePoolSize=1)
 
-  val loop: Future[Unit] = {
+  def update: Future[Unit] = {
     logMemoryStats()
     (for {
       host_ip <- ExternalIPProvider.failover(failoverProvider)
@@ -66,7 +66,7 @@ object Scant extends App with ScantLogging with SystemManagement {
   import scala.concurrent.Await
   import scala.concurrent.duration._
   if (!daemon) {
-    loop.onComplete { case _ =>
+    update.onComplete { case _ =>
       exec.shutdown()
       System.shutdownNow()
     }
@@ -75,7 +75,7 @@ object Scant extends App with ScantLogging with SystemManagement {
     val delay = 0.seconds
 
     logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
-    val cancelable = exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { loop }
+    val cancelable = exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { update }
 
     Await.result(cancelable, Duration.Inf)
   }
