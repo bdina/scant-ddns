@@ -97,8 +97,11 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
     socket.close()
 
     controlLocation(responseData).flatMap { case url =>
-      logger.finer(s"found control location => $url")
+      logger.info(s"control location url => $url")
       fetchExternalIp(url)
+    }.map { case address =>
+      logger.info(s"external address => ${address.getHostAddress}")
+      address
     }
   }
 }
