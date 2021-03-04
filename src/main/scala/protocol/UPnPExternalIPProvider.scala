@@ -14,13 +14,13 @@ object UPnPExternalIPProvider extends app.ScantLogging {
 
   val serviceNs = "urn:schemas-upnp-org:service:WANIPConnection:1"
 
-  val soapBody: String = s"""<?xml version="2.0"?>
-                            |<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope"
-                            | SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-                            |  <SOAP-ENV:Body>
-                            |    $serviceNs
-                            |  </SOAP-ENV:Body>
-                            |</SOAP-ENV:Envelope>""".stripMargin
+  val soapBody: xml.Elem =
+    <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope"
+     SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+      <SOAP-ENV:Body>
+        { serviceNs }
+      </SOAP-ENV:Body>
+    </SOAP-ENV:Envelope>
 
   val soapAction: String = "urn:schemas-upnp-org:service:WANIPConnection:1#GetExternalIPAddress"
 
@@ -38,8 +38,8 @@ object UPnPExternalIPProvider extends app.ScantLogging {
     Try(XML.loadString(resp))
   }
 
-  def postXML(uri: URI, body: String, headers: Map[String,String]): Try[xml.Elem] =
-    httpClient.tryPost(uri, body, headers).flatMap { case resp =>
+  def postXML(uri: URI, body: xml.Elem, headers: Map[String,String]): Try[xml.Elem] =
+    httpClient.tryPost(uri, body.toString, headers).flatMap { case resp =>
       logger.finest(s"fetched from URL (POST) => $resp")
       Try(XML.loadString(resp))
     }
