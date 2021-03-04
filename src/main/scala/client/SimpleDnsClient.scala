@@ -165,7 +165,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
       dnsIp.map { case response =>
         val address = response.address
         val ttl = response.ttl
-        logger.info(s"cache DNS response for $ttl seconds")
+        logger.info(s"cache DNS response [${address.getHostAddress}] for $ttl seconds")
         this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
         address
       }

@@ -51,13 +51,16 @@ object Scant extends App with ScantLogging with SystemManagement {
       (host_ip, dns_ip)
     }).map {
       case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) if (dnsAddress != externalAddress) =>
-        logger.info(s"externalAddress:${externalAddress.getHostAddress} :: dnsAddress:${dnsAddress.getHostAddress} - updating DNS via $ddnsProvider")
+        logger.info(s"updating DDNS via $ddnsProvider")
         ddnsProvider.update(host, domain, externalAddress)
       case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) =>
-        logger.info(s"externalAddress:${externalAddress.getHostAddress} :: dnsAddress:${dnsAddress.getHostAddress} - nothing to update")
-      case (None, Some(_)) => logger.severe("unable to fetch external IP!")
-      case (Some(_), None) => logger.severe("unable to fetch host record")
-      case (None, None) => logger.severe("unable to fetch external IP and host record")
+        logger.info(s"nothing to update")
+      case (None, Some(_)) =>
+        logger.severe("unable to fetch external IP!")
+      case (Some(_), None) =>
+        logger.severe("unable to fetch host record")
+      case (None, None) =>
+        logger.severe("unable to fetch external IP and host record")
     }.recover {
       case exception => logger.severe(s"unable to process: ${exception.getMessage}")
     }
