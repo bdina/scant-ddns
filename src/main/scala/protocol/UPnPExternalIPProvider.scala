@@ -12,12 +12,11 @@ object UPnPExternalIPProvider extends app.ScantLogging {
 
   val ssdpRequest: String = s"M-SEARCH * HTTP/1.1\r\nHOST: $SsdpAddr:$SsdpPort\r\nMAN: 'ssdp:discover'\r\nMX: $SsdpMx\r\nST: $SsdpSt\r\n"
 
-  val soapEncoding: String = "http://schemas.xmlsoap.org/soap/encoding/"
-  val soapEnv: String = "http://schemas.xmlsoap.org/soap/envelope"
-  val serviceNs: String = "urn:schemas-upnp-org:service:WANIPConnection:1"
+  val serviceNs = "urn:schemas-upnp-org:service:WANIPConnection:1"
 
-  val soapBody: String = s"""<?xml version="1.0"?>
-                            |<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+  val soapBody: String = s"""<?xml version="2.0"?>
+                            |<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope"
+                            | SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
                             |  <SOAP-ENV:Body>
                             |    $serviceNs
                             |  </SOAP-ENV:Body>
@@ -49,8 +48,6 @@ object UPnPExternalIPProvider extends app.ScantLogging {
   def controlLocation(ssdpResponse: String): Option[URI] =
     Location.findFirstMatchIn(ssdpResponse).map { case m => new URI(m.group("value")) }
 
-  val WAN_IP_URN = "urn:schemas-upnp-org:service:WANIPConnection:1"
-
   def fetchExternalIp(url: URI): Option[InetAddress] = getXML(url).map { case xml =>
     val baseUrl = s"http://${url.getHost}:${url.getPort}"
 
@@ -59,7 +56,7 @@ object UPnPExternalIPProvider extends app.ScantLogging {
         val serviceType = (svc \ "serviceType").text
         val controlUrl  = s"$baseUrl${ (svc \ "controlURL").text }"
         val scpdUrl     = s"$baseUrl${ (svc \ "SCPDURL").text }"
-        if (serviceType == WAN_IP_URN) {
+        if (serviceType == serviceNs) {
           ctrl_url = Some(new URI(controlUrl))
           logger.fine(s"found WAN IP control url: $ctrl_url")
         }
