@@ -11,6 +11,8 @@ object SimpleDnsClient extends app.ScantLogging {
   val DefaultServerAddress: String = "8.8.8.8"
   val DnsServerPort: Int = 53
 
+  val SO_TIMEOUT: Int = java.util.concurrent.TimeUnit.SECONDS.toMillis(3L).toInt
+
   def dnsServerAddress(): InetAddress = InetAddress.getByName(DefaultServerAddress)
 
   val clientIdBytes = new Array[Byte](2)
@@ -148,6 +150,8 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
       // *** Send DNS Request Frame ***
       val dnssocket = new DatagramSocket()
+      dnssocket.setSoTimeout(SO_TIMEOUT)
+
       logger.finest("sending question to DNS ...")
       val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsResolver, DnsServerPort)
       dnssocket.send(dnsReqPacket)
