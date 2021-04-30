@@ -28,7 +28,7 @@ dependencies {
     testImplementation group: 'org.scalatestplus', name: 'junit-4-12_2.13', version: '3.2.2.0'
 }
 
-version = '1.7.3'
+version = '1.7.4'
 
 application {
     mainClassName = 'app.Scant'
