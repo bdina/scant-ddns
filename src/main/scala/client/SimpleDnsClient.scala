@@ -137,7 +137,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
   import client.SimpleDnsClient._
 
-  import client.net._
+  import protocol.net._
 
   private var cached_address: Option[(InetAddress,Instant,Request.Question)] = None
 
@@ -150,17 +150,17 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
       logger.finer(s"Sending: ${dnsFrame.length} bytes")
       logger.finest(() => dnsFrame.map { case b => f"0x${b}%x" }.mkString(" "))
 
-      val dnssocket = new DatagramSocket()
+      val socket = new DatagramSocket()
 
       logger.finest("sending question to DNS ...")
       val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsResolver, DnsServerPort)
 
       val dnsIp = (for {
-        _ <- dnssocket.trySend(dnsReqPacket).toOption
-        buf <- dnssocket.tryReceive().toOption
-        response = Response.Question(buf)
+        _ <- socket.trySend(dnsReqPacket).toOption
+        packet <- socket.tryReceive().toOption
+        response = Response.Question(packet.getData)
       } yield {
-        dnssocket.close()
+        socket.close()
         response
       }).flatten
 

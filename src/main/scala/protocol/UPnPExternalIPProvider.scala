@@ -71,12 +71,16 @@ object UPnPExternalIPProvider extends app.ScantLogging {
       }.toOption
     }
   }.toOption.flatten
+
+  val SO_TIMEOUT = java.util.concurrent.TimeUnit.SECONDS.toMillis(1).toInt
 }
 
 case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLogging {
   import UPnPExternalIPProvider._
 
   import java.net.{DatagramPacket, DatagramSocket}
+
+  import protocol.net._
 
   override def address(): Option[InetAddress] = {
     val ssdpRequestBytes = ssdpRequest.getBytes
@@ -85,23 +89,22 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
       new DatagramPacket(ssdpRequestBytes, 0, ssdpRequestBytes.length, SsdpAddr, SsdpPort)
 
     val socket = new DatagramSocket()
-    socket.setSoTimeout(1000)
 
-    val buff = new Array[Byte](8192)
-    val response = new DatagramPacket(buff, buff.length)
-
-    socket.send(request)
-    socket.receive(response)
-
-    val responseData = new String(response.getData).trim
-    socket.close()
-
-    controlLocation(responseData).flatMap { case url =>
-      logger.info(s"control location url => $url")
-      fetchExternalIp(url)
-    }.map { case address =>
-      logger.info(s"external address => ${address.getHostAddress}")
-      address
+    (for {
+      _ <- socket.trySend(request).toOption
+      packet <- socket.tryReceive(bytes=8192).toOption
+      response = new String(packet.getData).trim
+    } yield {
+      socket.close()
+      response
+    }).flatMap { case data =>
+      controlLocation(data).flatMap { case url =>
+        logger.info(s"control location url => $url")
+        fetchExternalIp(url)
+      }.map { case address =>
+        logger.info(s"external address => ${address.getHostAddress}")
+        address
+      }
     }
   }
 }
