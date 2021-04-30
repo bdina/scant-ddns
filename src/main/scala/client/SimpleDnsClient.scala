@@ -137,7 +137,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
   import client.SimpleDnsClient._
 
-  import scala.util.Try
+  import client.net._
 
   private var cached_address: Option[(InetAddress,Instant,Request.Question)] = None
 
@@ -150,31 +150,27 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
       logger.finer(s"Sending: ${dnsFrame.length} bytes")
       logger.finest(() => dnsFrame.map { case b => f"0x${b}%x" }.mkString(" "))
 
-      // *** Send DNS Request Frame ***
       val dnssocket = new DatagramSocket()
-      dnssocket.setSoTimeout(SO_TIMEOUT)
 
       logger.finest("sending question to DNS ...")
       val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsResolver, DnsServerPort)
-      Try { dnssocket.send(dnsReqPacket) }.map { case _ =>
-        // Await response from DNS server
-        val buf = new Array[Byte](1024)
-        val packet = new DatagramPacket(buf, buf.length)
-        Try { dnssocket.receive(packet) }.map { case _ =>
-          logger.finer(s"\n\nReceived: ${packet.getLength} bytes")
 
-          val dnsIp = Response.Question(buf)
-          dnssocket.close()
+      val dnsIp = (for {
+        _ <- dnssocket.trySend(dnsReqPacket).toOption
+        buf <- dnssocket.tryReceive().toOption
+        response = Response.Question(buf)
+      } yield {
+        dnssocket.close()
+        response
+      }).flatten
 
-          dnsIp.map { case response =>
-            val address = response.address
-            val ttl = response.ttl
-            logger.info(s"cache DNS response [${address.getHostAddress}] for $ttl seconds")
-            this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
-            address
-          }
-        }.getOrElse(None)
-      }.getOrElse(None)
+      dnsIp.map { case response =>
+        val address = response.address
+        val ttl = response.ttl
+        logger.info(s"cache DNS response [${address.getHostAddress}] for $ttl seconds")
+        this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
+        address
+      }
     }
 
     logger.info(s"query DNS - fetch host [${host.name}] of domain [${domain.name}]")
