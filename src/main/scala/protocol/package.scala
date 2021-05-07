@@ -7,7 +7,7 @@ object Http {
   import java.util.concurrent.Executors
   implicit lazy val httpClient: HttpClient = HttpClient.newBuilder()
                                                        .followRedirects(HttpClient.Redirect.NORMAL)
-                                                       .connectTimeout(Duration.ofSeconds(10))
+                                                       .connectTimeout(Duration.ofSeconds(3))
                                                        .executor(Executors.newFixedThreadPool(1))
                                                        .build()
 }
