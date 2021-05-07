@@ -79,6 +79,7 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
   import UPnPExternalIPProvider._
 
   import java.net.{DatagramPacket, DatagramSocket}
+  import scala.util.Using
 
   import protocol.net._
 
@@ -88,23 +89,22 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
     val request =
       new DatagramPacket(ssdpRequestBytes, 0, ssdpRequestBytes.length, SsdpAddr, SsdpPort)
 
-    val socket = new DatagramSocket()
-
-    (for {
-      _ <- socket.trySend(request).toOption
-      packet <- socket.tryReceive(bytes=8192).toOption
-      response = new String(packet.getData).trim
-    } yield {
-      socket.close()
-      response
-    }).flatMap { case data =>
-      controlLocation(data).flatMap { case url =>
-        logger.info(s"control location url => $url")
-        fetchExternalIp(url)
-      }.map { case address =>
-        logger.info(s"external address => ${address.getHostAddress}")
-        address
+    Using(new DatagramSocket()) { case socket =>
+      (for {
+        _ <- socket.trySend(request).toOption
+        packet <- socket.tryReceive(bytes=8192).toOption
+        response = new String(packet.getData).trim
+      } yield {
+        response
+      }).flatMap { case data =>
+        controlLocation(data).flatMap { case url =>
+          logger.info(s"control location url => $url")
+          fetchExternalIp(url)
+        }.map { case address =>
+          logger.info(s"external address => ${address.getHostAddress}")
+          address
+        }
       }
-    }
+    }.getOrElse(None)
   }
 }

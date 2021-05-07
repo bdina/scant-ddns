@@ -135,6 +135,8 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
   import java.net.{DatagramPacket, DatagramSocket}
   import java.time.Instant
 
+  import scala.util.Using
+
   import client.SimpleDnsClient._
 
   import protocol.net._
@@ -150,27 +152,26 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
       logger.finer(s"Sending: ${dnsFrame.length} bytes")
       logger.finest(() => dnsFrame.map { case b => f"0x${b}%x" }.mkString(" "))
 
-      val socket = new DatagramSocket()
+      Using(new DatagramSocket()) { case socket =>
+        logger.finest("sending question to DNS ...")
+        val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsResolver, DnsServerPort)
 
-      logger.finest("sending question to DNS ...")
-      val dnsReqPacket = new DatagramPacket(dnsFrame, dnsFrame.length, dnsResolver, DnsServerPort)
+        val dnsIp = (for {
+          _ <- socket.trySend(dnsReqPacket).toOption
+          packet <- socket.tryReceive().toOption
+          response = Response.Question(packet.getData)
+        } yield {
+          response
+        }).flatten
 
-      val dnsIp = (for {
-        _ <- socket.trySend(dnsReqPacket).toOption
-        packet <- socket.tryReceive().toOption
-        response = Response.Question(packet.getData)
-      } yield {
-        socket.close()
-        response
-      }).flatten
-
-      dnsIp.map { case response =>
-        val address = response.address
-        val ttl = response.ttl
-        logger.info(s"cache DNS response [${address.getHostAddress}] for $ttl seconds")
-        this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
-        address
-      }
+        dnsIp.map { case response =>
+          val address = response.address
+          val ttl = response.ttl
+          logger.info(s"cache DNS response [${address.getHostAddress}] for $ttl seconds")
+          this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
+          address
+        }
+      }.getOrElse(None)
     }
 
     logger.info(s"query DNS - fetch host [${host.name}] of domain [${domain.name}]")
