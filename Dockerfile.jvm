@@ -9,7 +9,7 @@ ARG DDNS_VERSION=1.7.5
 # build (this is discarded by docker post-build)
 FROM openjdk:${OPENJDK_VERSION}-jdk-alpine AS build
 
-ARG GRADLE_VERSION=6.8.2
+ARG GRADLE_VERSION=7.0.2
 ARG DDNS_VERSION
 
 # Install tools required for project
