@@ -10,7 +10,7 @@ trait ScantLogging {
 }
 
 object System {
-  val ONE_MB = 1024*1024
+  final val ONE_MB = 1024*1024
   val runtime = Runtime.getRuntime
 
   case class Stats(used: Long, free: Long, total: Long, max: Long)
