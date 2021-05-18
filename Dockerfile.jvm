@@ -3,7 +3,7 @@
 ARG OPENJDK_VERSION=11
 ARG OPENJDK_WORKDIR=/openjdk/src/project
 
-ARG DDNS_VERSION=1.7.5
+ARG DDNS_VERSION=1.7.6
 
 # Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
@@ -46,4 +46,4 @@ COPY --from=build ${OPENJDK_WORKDIR}/ddns* ${OPENJDK_WORKDIR}/build/libs/* ${DDN
 # And we finally create the application layer
 FROM ddns-base AS ddns
 ENTRYPOINT [ "java" ]
-CMD [ "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns-1.7.5.jar" , "-d" ]
+CMD [ "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns-1.7.6.jar" , "-d" ]
