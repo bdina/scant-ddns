@@ -2,7 +2,7 @@
 A hardly sufficient Dynamic DNS updater
 
 ### Requirements
-this project requires `Java 11` and `Scala 2.13.5`
+this project requires `Java 11` and `Scala 2.13.6`
 
 ## Create a native image (of shadowJar)
 1. use gradle to create a build of the shadow jar:
