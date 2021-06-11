@@ -18,7 +18,7 @@ package object http {
 
   import scala.util.Try
 
-  implicit class EnhancedHttpClient(hc: HttpClient) {
+  implicit class EnhancedHttpClient(val hc: HttpClient) extends AnyVal {
     def tryGet(uri: URI): Try[String] = {
       val request = HttpRequest.newBuilder(uri).GET.build()
       Try { hc.send(request, HttpResponse.BodyHandlers.ofString()).body }
@@ -42,17 +42,13 @@ package object net {
 
   import scala.util.Try
 
-  implicit class EnhancedDatagramSocket(ds: DatagramSocket) extends app.ScantLogging {
-
-    logger.fine(s"Set SoTimeout on DatagramSocket ${Constants.SO_TIMEOUT} ms")
-    ds.setSoTimeout(Constants.SO_TIMEOUT)
-
+  implicit class EnhancedDatagramSocket(val ds: DatagramSocket) extends AnyVal {
     def trySend(packet: DatagramPacket): Try[Unit] = Try { ds.send(packet) }
     def tryReceive(bytes: Int = 1024): Try[DatagramPacket] = Try {
       val buf = new Array[Byte](bytes)
       val packet = new DatagramPacket(buf, buf.length)
+      ds.setSoTimeout(Constants.SO_TIMEOUT)
       ds.receive(packet)
-      logger.finer(s"\n\nReceived: ${packet.getLength} bytes")
       packet
     }
   }
