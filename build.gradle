@@ -6,7 +6,7 @@ apply plugin: 'scala'
 apply plugin: 'application'
 
 repositories {
-    jcenter()
+    mavenCentral()
     maven {
         url 'https://mvnrepository.com/artifact'
     }
@@ -30,7 +30,7 @@ dependencies {
 version = '1.7.6'
 
 application {
-    mainClassName = 'app.Scant'
+    mainClass = 'app.Scant'
 }
 
 processResources {
@@ -50,7 +50,7 @@ sourceSets {
 }
 
 task repl(type:JavaExec) {
-    main = "scala.tools.nsc.MainGenericRunner"
+    mainClass = "scala.tools.nsc.MainGenericRunner"
     classpath = sourceSets.main.runtimeClasspath
     standardInput System.in
     args '-usejavacp'
