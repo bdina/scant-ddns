@@ -39,17 +39,17 @@ object Scant extends App with ScantLogging with SystemManagement {
 
   import java.net.InetAddress
   import scala.concurrent.Future
+  import scala.async.Async.{async,await}
 
   implicit val exec = concurrent.ScheduledExecutionContext(corePoolSize=1)
 
   def update: Future[Unit] = {
     logMemoryStats()
-    (for {
-      host_ip <- ExternalIPProvider.failover(failoverProvider)
-      dns_ip <- DNSProvider.dns_lookup(host, domain)
-    } yield {
-      (host_ip, dns_ip)
-    }).map {
+    async {
+      val host_ip = ExternalIPProvider.failover(failoverProvider)
+      val dns_ip = DNSProvider.dns_lookup(host, domain)
+      (await(host_ip), await(dns_ip))
+    }.map {
       case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) if (dnsAddress != externalAddress) =>
         logger.info(s"updating DDNS via $ddnsProvider")
         ddnsProvider.update(host, domain, externalAddress)

@@ -15,7 +15,9 @@ repositories {
 dependencies {
     implementation group: 'org.scala-lang' , name: 'scala-library'  , version: '2.13.6'
     implementation group: 'org.scala-lang' , name: 'scala-compiler' , version: '2.13.6'
+    implementation group: 'org.scala-lang' , name: 'scala-reflect' , version: '2.13.6'
 
+    implementation group: 'org.scala-lang.modules', name: 'scala-async_2.13', version: '1.0.0-M1'
     implementation group: 'org.scala-lang.modules', name: 'scala-xml_2.13', version: '2.0.0'
 
     testImplementation group: 'org.scalatest', name: 'scalatest_2.13', version: '3.2.9'
@@ -59,5 +61,5 @@ shadowJar {
 }
 
 compileScala { // or: tasks.withType(ScalaCompile)
-    scalaCompileOptions.additionalParameters = ["-feature","-deprecation","-unchecked","-Xlint","-Xfatal-warnings"]
+    scalaCompileOptions.additionalParameters = ["-feature","-deprecation","-unchecked","-Xlint","-Xfatal-warnings","-Xasync"]
 }
