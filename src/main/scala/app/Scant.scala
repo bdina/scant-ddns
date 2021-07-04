@@ -41,9 +41,7 @@ object Scant extends App with ScantLogging with SystemManagement {
   import scala.concurrent.Future
   import scala.async.Async.{async,await}
 
-  implicit val exec = concurrent.ScheduledExecutionContext(corePoolSize=1)
-
-  def update: Future[Unit] = {
+  def update()(implicit ec: scala.concurrent.ExecutionContext): Future[Unit] = {
     logMemoryStats()
     async {
       val host_ip = ExternalIPProvider.failover(failoverProvider)
@@ -66,20 +64,18 @@ object Scant extends App with ScantLogging with SystemManagement {
     }
   }
 
-  import scala.concurrent.Await
-  import scala.concurrent.duration._
   if (!daemon) {
-    update.onComplete { case _ =>
-      exec.shutdown()
-      System.shutdownNow()
-    }
+    implicit val ec = scala.concurrent.ExecutionContext.global
+    update()
   } else {
+    val factory = concurrent.ScheduledExecutionContext.ScheduledThreadFactory(daemonize=true)
+    implicit val ec = concurrent.ScheduledExecutionContext(corePoolSize=1,threadFactory=factory)
+
+    import scala.concurrent.duration._
     val duration = 1.minutes
     val delay = 0.seconds
 
     logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
-    val cancelable = exec.scheduleAtFixedRate(period=duration, initialDelay=delay) { update }
-
-    Await.result(cancelable, Duration.Inf)
+    ec.scheduleAtFixedRate(period=duration, initialDelay=delay) { update() }
   }
 }

@@ -48,11 +48,11 @@ case class ScheduledExecutionContext(
   }
 }
 object ScheduledExecutionContext {
-  private val defaultRejectedHandler: RejectedExecutionHandler = new AbortPolicy
-  private val defaultThreadFactory: ThreadFactory = new ScheduledThreadFactory
+  private val defaultRejectedHandler: RejectedExecutionHandler = new AbortPolicy()
+  private val defaultThreadFactory: ThreadFactory = ScheduledThreadFactory()
 
   import java.util.concurrent.atomic.AtomicInteger
-  class ScheduledThreadFactory() extends ThreadFactory with app.ScantLogging {
+  case class ScheduledThreadFactory(daemonize: Boolean = false) extends ThreadFactory with app.ScantLogging {
     import ScheduledThreadFactory._
     private val threadNumber = new AtomicInteger(1)
 
@@ -63,7 +63,7 @@ object ScheduledExecutionContext {
 
     override def newThread(r: Runnable): Thread = {
       val t = new Thread(group, r, s"$namePrefix${threadNumber.getAndIncrement()}", 0)
-      if (t.isDaemon()) t.setDaemon(false)
+      t.setDaemon(daemonize)
       if (t.getPriority() != Thread.NORM_PRIORITY) t.setPriority(Thread.NORM_PRIORITY)
       logger.info(s"created $t")
       t
