@@ -13,6 +13,9 @@ FROM ghcr.io/graalvm/graalvm-ce:java${JAVA_VERSION}-${GRAALVM_VERSION} AS build
 ARG GRADLE_VERSION=7.2
 ARG DDNS_VERSION
 
+ARG MUSL_VERSION=1.2.2
+ARG ZLIB_VERSION=1.2.11
+
 # Install tools required for project
 # Run `docker build --no-cache .` to update dependencies
 RUN gu install native-image \
@@ -20,7 +23,31 @@ RUN gu install native-image \
  && microdnf clean all \
  && wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -P /tmp \
  && unzip -d /opt /tmp/gradle-${GRADLE_VERSION}-bin.zip \
- && rm /tmp/gradle-${GRADLE_VERSION}-bin.zip
+ && wget https://musl.libc.org/releases/musl-${MUSL_VERSION}.tar.gz -P /tmp \
+ && tar -zxvf /tmp/musl-${MUSL_VERSION}.tar.gz -C /tmp \
+ && wget https://zlib.net/zlib-${ZLIB_VERSION}.tar.gz -P /tmp \
+ && tar -zxvf /tmp/zlib-${ZLIB_VERSION}.tar.gz -C /tmp \
+ && rm /tmp/gradle-${GRADLE_VERSION}-bin.zip \
+ && rm /tmp/musl-${MUSL_VERSION}.tar.gz \
+ && rm /tmp/zlib-${ZLIB_VERSION}.tar.gz
+
+# Build MUSL to static link into application
+ENV LIB_DIR=/opt/musl
+
+WORKDIR /tmp/musl-${MUSL_VERSION}
+RUN ./configure --disable-shared --prefix=${LIB_DIR} \
+ && make \
+ && make install \
+ && rm -rf /tmp/musl-${MUSL_VERSION}
+
+ENV PATH=$PATH:${LIB_DIR}/bin
+ENV CC=musl-gcc
+
+WORKDIR /tmp/zlib-${ZLIB_VERSION}
+RUN ./configure --static --prefix=${LIB_DIR} \
+ && make \
+ && make install \
+ && rm -rf /tmp/zlib-${ZLIB_VERSION}
 
 ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
 ENV PATH=${GRADLE_HOME}/bin:${PATH}
@@ -32,8 +59,8 @@ WORKDIR /graalvm/src/project
 COPY . /graalvm/src/project
 RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar \
  && ${JAVA_HOME}/bin/native-image \
-    --no-server \
     --static \
+    --libc=musl \
     -R:MinHeapSize=1m \
     -R:MaxHeapSize=3m \
     -R:MaxNewSize=3m \
@@ -41,8 +68,8 @@ RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar \
 
 # Create a staging image (this will be part of the distribution)
 #FROM oracle/graalvm-ce:${GRAALVM_VERSION} AS dns-stage
-#FROM alpine AS dns-stage
-FROM scratch AS dns-stage
+FROM alpine AS dns-stage
+#FROM scratch AS dns-stage
 
 ARG GRAALVM_WORKDIR
 ARG DDNS_VERSION
@@ -55,11 +82,11 @@ WORKDIR ${DDNS_HOME}
 # Graal substrate VM requires libnss (even when a static binary is built)
 # we copy the glibc version into the image - this is because both
 # Scratch and Alpine do NOT include a glibc runtime
-COPY --from=build /lib64/ld-linux-x86-64.so.2 \
-                  /lib64/libc.so.6 \
-                  /lib64/libnss_dns.so.2 \
-                  /lib64/libnss_files.so.2 \
-                  /lib64/libresolv.so.2 /lib64/
+#COPY --from=build /lib64/ld-linux-x86-64.so.2 \
+#                  /lib64/libc.so.6 \
+#                  /lib64/libnss_dns.so.2 \
+#                  /lib64/libnss_files.so.2 \
+#                  /lib64/libresolv.so.2 /lib64/
 
 COPY --from=build ${GRAALVM_WORKDIR}/ddns* ${DDNS_HOME}/
 
@@ -67,5 +94,5 @@ CMD [ "/bin/sh" ]
 
 # And we finally create the application layer
 FROM dns-stage AS dns
-ENTRYPOINT [ "./ddns" ]
-CMD [ "-XX:+PrintGC" , "-XX:+PrintGCTimeStamps" , "-XX:+VerboseGC" , "-d" ]
+#ENTRYPOINT [ "./ddns" ]
+#CMD [ "-XX:+PrintGC" , "-XX:+PrintGCTimeStamps" , "-XX:+VerboseGC" , "-d" ]
