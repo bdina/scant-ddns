@@ -56,16 +56,14 @@ object ScheduledExecutionContext {
     import ScheduledThreadFactory._
     private val threadNumber = new AtomicInteger(1)
 
-    private val s = System.getSecurityManager()
-
-    private val group = if (s != null) s.getThreadGroup() else Thread.currentThread().getThreadGroup()
+    private val group = Thread.currentThread().getThreadGroup()
     private val namePrefix = s"scala-execution-context-scheduled-${poolNumber.getAndIncrement()}-thread-"
 
     override def newThread(r: Runnable): Thread = {
       val t = new Thread(group, r, s"$namePrefix${threadNumber.getAndIncrement()}", 0)
       t.setDaemon(daemonize)
       if (t.getPriority() != Thread.NORM_PRIORITY) t.setPriority(Thread.NORM_PRIORITY)
-      logger.info(s"created $t")
+      logger.info(s"created $t (daemon $daemonize)")
       t
     }
   }

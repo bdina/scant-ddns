@@ -68,7 +68,7 @@ object Scant extends App with ScantLogging with SystemManagement {
     implicit val ec = scala.concurrent.ExecutionContext.global
     update()
   } else {
-    val factory = concurrent.ScheduledExecutionContext.ScheduledThreadFactory(daemonize=true)
+    val factory = concurrent.ScheduledExecutionContext.ScheduledThreadFactory()
     implicit val ec = concurrent.ScheduledExecutionContext(corePoolSize=1,threadFactory=factory)
 
     import scala.concurrent.duration._
