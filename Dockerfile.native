@@ -4,7 +4,7 @@ ARG GRAALVM_VERSION=21.3.0
 ARG JAVA_VERSION=11
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
-ARG DDNS_VERSION=1.7.6
+ARG DDNS_VERSION=1.7.7
 
 # Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
