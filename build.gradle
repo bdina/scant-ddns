@@ -12,16 +12,21 @@ repositories {
     }
 }
 
+ext {
+    scala_maj = '2.13'
+    scala_ver = "${scala_maj}.6"
+}
+
 dependencies {
-    implementation group: 'org.scala-lang' , name: 'scala-library'  , version: '2.13.6'
-    implementation group: 'org.scala-lang' , name: 'scala-compiler' , version: '2.13.6'
-    implementation group: 'org.scala-lang' , name: 'scala-reflect' , version: '2.13.6'
+    implementation group: 'org.scala-lang' , name: 'scala-library'  , version: scala_ver
+    implementation group: 'org.scala-lang' , name: 'scala-compiler' , version: scala_ver
+    implementation group: 'org.scala-lang' , name: 'scala-reflect'  , version: scala_ver
 
-    implementation group: 'org.scala-lang.modules', name: 'scala-async_2.13', version: '1.0.0-M1'
-    implementation group: 'org.scala-lang.modules', name: 'scala-xml_2.13', version: '2.0.0'
+    implementation group: 'org.scala-lang.modules', name: "scala-async_${scala_maj}", version: '1.0.0-M1'
+    implementation group: 'org.scala-lang.modules', name: "scala-xml_${scala_maj}", version: '2.0.0'
 
-    testImplementation group: 'org.scalatest', name: 'scalatest_2.13', version: '3.2.9'
-    testImplementation group: 'org.scalactic', name: 'scalactic_2.13', version: '3.2.9'
+    testImplementation group: 'org.scalatest', name: "scalatest_${scala_maj}", version: '3.2.9'
+    testImplementation group: 'org.scalactic', name: "scalactic_${scala_maj}", version: '3.2.9'
 
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
     testImplementation group: 'org.scalatestplus', name: 'junit-4-13_2.13', version: '3.2.9.0'
