@@ -4,14 +4,14 @@ ARG GRAALVM_VERSION=21.3.0
 ARG JAVA_VERSION=11
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
-ARG DDNS_VERSION=1.7.7
+ARG APP_VERSION=1.7.7
 
 # Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
 FROM ghcr.io/graalvm/graalvm-ce:java${JAVA_VERSION}-${GRAALVM_VERSION} AS build
 
 ARG GRADLE_VERSION=7.2
-ARG DDNS_VERSION
+ARG APP_VERSION
 
 ARG MUSL_VERSION=x86_64
 ARG ZLIB_VERSION=1.2.11
@@ -58,26 +58,26 @@ RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar \
     -R:MinHeapSize=1m \
     -R:MaxHeapSize=3m \
     -R:MaxNewSize=3m \
-    -jar build/libs/ddns-${DDNS_VERSION}.jar
+    -jar build/libs/ddns-${APP_VERSION}.jar
 
 # Create a staging image (this will be part of the distribution)
-#FROM oracle/graalvm-ce:${GRAALVM_VERSION} AS dns-stage
-#FROM alpine AS dns-stage
-FROM scratch AS dns-stage
+#FROM oracle/graalvm-ce:${GRAALVM_VERSION} AS app-stage
+#FROM alpine AS app-stage
+FROM scratch AS app-stage
 
 ARG GRAALVM_WORKDIR
-ARG DDNS_VERSION
+ARG APP_VERSION
 
-ENV DDNS_HOME=/opt/ddns
-ENV PATH=${DDNS_HOME}/bin:${PATH}
+ENV APP_HOME=/opt/ddns
+ENV PATH=${APP_HOME}/bin:${PATH}
 
-WORKDIR ${DDNS_HOME}
+WORKDIR ${APP_HOME}
 
-COPY --from=build ${GRAALVM_WORKDIR}/ddns* ${DDNS_HOME}/
+COPY --from=build ${GRAALVM_WORKDIR}/ddns* ${APP_HOME}/
 
 #CMD [ "/bin/sh" ]
 
 # And we finally create the application layer
-FROM dns-stage AS dns
+FROM app-stage AS app
 ENTRYPOINT [ "./ddns" ]
 CMD [ "-XX:+PrintGC" , "-XX:+PrintGCTimeStamps" , "-XX:+VerboseGC" , "-d" ]
