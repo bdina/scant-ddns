@@ -65,6 +65,14 @@ shadowJar {
     classifier = ''
 }
 
-compileScala { // or: tasks.withType(ScalaCompile)
-    scalaCompileOptions.additionalParameters = ["-feature","-deprecation","-unchecked","-Xlint","-Xfatal-warnings","-Xasync","-Xsource:3"]
+compileScala {
+    scalaCompileOptions.additionalParameters = [
+        "-feature"
+      , "-deprecation"
+      , "-unchecked"
+      , "-Xlint"
+      , "-Xfatal-warnings"
+      , "-Xasync"
+      , "-Xsource:3"
+    ]
 }
