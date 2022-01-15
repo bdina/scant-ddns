@@ -1,5 +1,5 @@
 plugins {
-  id 'com.github.johnrengelman.shadow' version '7.1.0'
+  id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 apply plugin: 'scala'
@@ -14,7 +14,7 @@ repositories {
 
 ext {
     scala_maj = '2.13'
-    scala_ver = "${scala_maj}.7"
+    scala_ver = "${scala_maj}.8"
 }
 
 dependencies {
