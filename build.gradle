@@ -35,7 +35,7 @@ dependencies {
 version = '1.7.7'
 
 application {
-    mainClass = 'app.Scant'
+    mainClass.set("app.Scant")
 }
 
 processResources {
