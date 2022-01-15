@@ -29,7 +29,7 @@ dependencies {
     testImplementation group: 'org.scalactic', name: "scalactic_${scala_maj}", version: '3.2.9'
 
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-    testImplementation group: 'org.scalatestplus', name: 'junit-4-13_2.13', version: '3.2.9.0'
+    testImplementation group: 'org.scalatestplus', name: "junit-4-13_${scala_maj}", version: '3.2.9.0'
 }
 
 version = '1.7.7'
