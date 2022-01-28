@@ -1,7 +1,5 @@
 # To build image run `docker build --tag ddns:<version> .`
 
-ARG APP_VERSION=1.7.8
-
 # Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
 FROM ubuntu:20.04 AS build
@@ -11,7 +9,6 @@ ARG JAVA_VERSION=11
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
 ARG GRADLE_VERSION=7.3.3
-ARG APP_VERSION
 
 # Install tools required for project
 # Run `docker build --no-cache .` to update dependencies
@@ -58,21 +55,13 @@ WORKDIR ${GRAALVM_WORKDIR}
 # Copy the entire project and build it
 # This layer is rebuilt when a file changes in the project directory
 COPY . ${GRAALVM_WORKDIR}
-RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar \
- && ${JAVA_HOME}/bin/native-image \
-    --static \
-    --libc=musl \
-    -R:MinHeapSize=1m \
-    -R:MaxHeapSize=3m \
-    -R:MaxNewSize=3m \
-    -jar build/libs/ddns-${APP_VERSION}.jar
+RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon nativeImage
 
 # Create a staging image (this will be part of the distribution)
 #FROM alpine AS app-stage
 FROM scratch AS app-stage
 
 ARG GRAALVM_WORKDIR
-ARG APP_VERSION
 
 ENV GRAALVM_WORKDIR=${GRAALVM_WORKDIR}
 ENV APP_HOME=/opt/ddns
