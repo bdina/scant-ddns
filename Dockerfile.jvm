@@ -3,14 +3,11 @@
 ARG OPENJDK_VERSION=11
 ARG OPENJDK_WORKDIR=/openjdk/src/project
 
-ARG DDNS_VERSION=1.7.8
-
 # Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
 # build (this is discarded by docker post-build)
 FROM openjdk:${OPENJDK_VERSION}-jdk-alpine AS build
 
 ARG GRADLE_VERSION=7.3.3
-ARG DDNS_VERSION
 
 # Install tools required for project
 # Run `docker build --no-cache .` to update dependencies
@@ -34,7 +31,6 @@ RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar
 FROM openjdk:${OPENJDK_VERSION}-jre-alpine AS ddns-base
 
 ARG OPENJDK_WORKDIR
-ARG DDNS_VERSION
 
 ENV DDNS_HOME=/opt/ddns
 ENV PATH=${DDNS_HOME}/bin:${PATH}
@@ -46,4 +42,4 @@ COPY --from=build ${OPENJDK_WORKDIR}/ddns* ${OPENJDK_WORKDIR}/build/libs/* ${DDN
 # And we finally create the application layer
 FROM ddns-base AS ddns
 ENTRYPOINT [ "java" ]
-CMD [ "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns-1.7.8.jar" , "-d" ]
+#CMD [ "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns.jar" , "-d" ]
