@@ -80,7 +80,7 @@ ENV PATH=${APP_HOME}/bin:${PATH}
 
 WORKDIR ${APP_HOME}
 
-COPY --from=build /graalvm/src/project/ddns /graalvm/src/project/ddns.properties ${APP_HOME}/
+COPY --from=build /graalvm/src/project/build/ddns /graalvm/src/project/ddns.properties ${APP_HOME}/
 
 #CMD [ "/bin/sh" ]
 

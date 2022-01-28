@@ -26,6 +26,9 @@ class NativeImage extends DefaultTask {
     @Input
     Integer maxNew = 32
 
+    @InputDirectory
+    File dir = project.buildDir
+
     @TaskAction
     void runCommand() {
         def heap = [
@@ -37,7 +40,7 @@ class NativeImage extends DefaultTask {
         def command = EXECUTABLE + parameters*.arg + heap + source
         logger.info "Executing native-image command: '${command.join(' ')}'"
 
-        def process = command.execute()
+        def process = command.execute(null, dir)
         process.consumeProcessOutput(System.out, System.err)
         process.waitFor()
 
