@@ -1,4 +1,7 @@
+import compiler.NativeImage
+
 plugins {
+  id 'compiler.native-image'
   id 'com.github.johnrengelman.shadow' version '7.1.2'
   id 'com.palantir.git-version' version '0.13.0'
 }
@@ -67,6 +70,19 @@ shadowJar {
     manifest {
         attributes 'App-Version': gitVersion()
     }
+}
+
+nativeImage {
+    dependsOn shadowJar
+
+    minHeap 1
+    maxHeap 3
+    maxNew 3
+
+    parameters = [
+      NativeImage.Option.STATIC
+    , NativeImage.Option.MUSL
+    ]
 }
 
 compileScala {
