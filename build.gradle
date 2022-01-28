@@ -1,5 +1,6 @@
 plugins {
   id 'com.github.johnrengelman.shadow' version '7.1.2'
+  id 'com.palantir.git-version' version '0.13.0'
 }
 
 apply plugin: 'scala'
@@ -32,7 +33,7 @@ dependencies {
     testImplementation group: 'org.scalatestplus', name: "junit-4-13_${scala_maj}", version: '3.2.9.0'
 }
 
-version = '1.7.8'
+version gitVersion()
 
 application {
     mainClass.set("app.Scant")
@@ -63,6 +64,9 @@ task repl(type:JavaExec) {
 
 shadowJar {
     classifier = ''
+    manifest {
+        attributes 'App-Version': gitVersion()
+    }
 }
 
 compileScala {

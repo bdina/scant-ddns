@@ -23,7 +23,8 @@ object Scant extends App with ScantLogging with SystemManagement {
     logger.info(s"MEMORY - Used ${stats.used} MB :: Free ${stats.free} MB :: Total ${stats.total} MB :: Max ${stats.max} MB")
   }
 
-  override def toString() = "Scant DDNS: a hardly sufficient Dynamic DNS updater"
+  val greeting = s"Scant DDNS $appVersion: a hardly sufficient Dynamic DNS updater"
+  override def toString() = greeting
 
   val (host, domain) = hostAndDomain()
 
@@ -35,7 +36,7 @@ object Scant extends App with ScantLogging with SystemManagement {
   val ddnsProvider = NamecheapDDNSProvider()
   val failoverProvider = OpenDNSExternalIPProvider() /* FIX seg fault */
 
-  logger.info(s"Start $this ($availableProcessors cpu cores) - dns provider $dnsProvider :: ddns provider $ddnsProvider")
+  logger.info(s"Start $this ($availableProcessors cpu cores) - dns provider $dnsProvider :: ddns provider $ddnsProvider (runtime $runtimeVersion)")
 
   import java.net.InetAddress
   import scala.concurrent.Future

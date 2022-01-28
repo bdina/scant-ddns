@@ -12,6 +12,19 @@ trait ScantLogging {
 object System {
   final val ONE_MB = 1024*1024
   val runtime = Runtime.getRuntime
+  val version = Runtime.version
+
+  object Manifest {
+    import java.util.jar.Manifest
+    val manifest = try {
+      new Manifest(System.getClass.getClassLoader.getResource("META-INF/MANIFEST.MF").openStream)
+    } catch {
+      case ex: Exception =>
+        println(s"UNABLE TO READ MANIFEST -> $ex")
+        new Manifest()
+    }
+    def attribute(name: String): Option[String] = Option(manifest.getMainAttributes.getValue(name))
+  }
 
   case class Stats(used: Long, free: Long, total: Long, max: Long)
 
@@ -21,7 +34,9 @@ object System {
 trait SystemManagement {
   import System._
 
-  def availableProcessors: Int = runtime.availableProcessors
+  val runtimeVersion: String = s"${version}"
+  val appVersion: String = Manifest.attribute("App-Version").getOrElse("beta-0.0.0")
+  val availableProcessors: Int = runtime.availableProcessors
 
   def memoryCleanup(): Unit = runtime.gc()
 
