@@ -75,9 +75,9 @@ shadowJar {
 nativeImage {
     dependsOn shadowJar
 
-    minHeap 1
-    maxHeap 3
-    maxNew 3
+    minHeap 4
+    maxHeap 8
+    maxNew 8
 
     parameters = [
       NativeImage.Option.STATIC
