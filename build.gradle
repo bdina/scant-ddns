@@ -82,6 +82,7 @@ nativeImage {
     parameters = [
       NativeImage.Option.STATIC
     , NativeImage.Option.MUSL
+    , NativeImage.Option.LINK_BUILD
     ]
 }
 

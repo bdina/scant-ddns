@@ -10,6 +10,7 @@ class NativeImage extends DefaultTask {
     enum Option {
         STATIC('--static')
       , MUSL('--libc=musl')
+      , LINK_BUILD('--link-at-build-time')
       String arg
       private Option(String s) { this.arg = s }
     }
@@ -17,7 +18,7 @@ class NativeImage extends DefaultTask {
     static final List<String> EXECUTABLE = [ 'native-image' ]
 
     @Input
-    List<Option> parameters = [ Option.STATIC, Option.MUSL ]
+    List<Option> parameters = [ Option.STATIC, Option.MUSL, Option.LINK_BUILD ]
 
     @Input
     Integer minHeap = 1
