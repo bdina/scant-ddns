@@ -39,7 +39,7 @@ class NativeImage extends DefaultTask {
         ]
         def source = [ '-jar', "${project.buildDir}/libs/ddns-${project.version}.jar" ]
         def command = EXECUTABLE + parameters*.arg + heap + source
-        logger.info "Executing native-image command: '${command.join(' ')}'"
+        logger.lifecycle "Executing native-image command: '${command.join(' ')}'"
 
         def process = command.execute(null, dir)
         process.consumeProcessOutput(System.out, System.err)
