@@ -4,11 +4,11 @@
 # build (this is discarded by docker post-build)
 FROM ubuntu:20.04 AS build
 
-ARG GRAALVM_VERSION=22.0.0.2
+ARG GRAALVM_VERSION=22.1.0
 ARG JAVA_VERSION=11
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
-ARG GRADLE_VERSION=7.3.3
+ARG GRADLE_VERSION=7.4.2
 
 # Install tools required for project
 # Run `docker build --no-cache .` to update dependencies
@@ -22,7 +22,7 @@ RUN apt-get update -y \
  && unzip -d /opt /tmp/gradle-${GRADLE_VERSION}-bin.zip
 
 ARG MUSL_VERSION=10.2.1
-ARG ZLIB_VERSION=1.2.11
+ARG ZLIB_VERSION=1.2.12
 
 RUN wget http://more.musl.cc/${MUSL_VERSION}/x86_64-linux-musl/x86_64-linux-musl-native.tgz -P /tmp \
  && mkdir /opt/musl-${MUSL_VERSION} \
