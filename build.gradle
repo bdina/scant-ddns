@@ -17,16 +17,14 @@ repositories {
 }
 
 ext {
-    scala_maj = '2.13'
-    scala_ver = "${scala_maj}.8"
+    scala_maj = '3'
+    scala_ver = "${scala_maj}.2.0"
 }
 
 dependencies {
-    implementation group: 'org.scala-lang' , name: 'scala-library'  , version: scala_ver
-    implementation group: 'org.scala-lang' , name: 'scala-compiler' , version: scala_ver
-    implementation group: 'org.scala-lang' , name: 'scala-reflect'  , version: scala_ver
+    implementation group: 'org.scala-lang' , name: 'scala3-library_3'  , version: scala_ver
+    implementation group: 'org.scala-lang' , name: 'scala3-compiler_3' , version: scala_ver
 
-    implementation group: 'org.scala-lang.modules', name: "scala-async_${scala_maj}", version: '1.0.1'
     implementation group: 'org.scala-lang.modules', name: "scala-xml_${scala_maj}", version: '2.1.0'
 
     testImplementation group: 'org.scalatest', name: "scalatest_${scala_maj}", version: '3.2.9'
@@ -39,7 +37,7 @@ dependencies {
 version gitVersion()
 
 application {
-    mainClass.set("app.Scant")
+    mainClass.set("app.scantApp")
 }
 
 processResources {
@@ -89,11 +87,14 @@ nativeImage {
 compileScala {
     scalaCompileOptions.additionalParameters = [
         "-feature"
-      , "-deprecation"
-      , "-unchecked"
-      , "-Xlint"
+//      , "-deprecation"
+//      , "-unchecked"
+//      , "-Xlint"
       , "-Xfatal-warnings"
-      , "-Xasync"
-      , "-Xsource:3"
+//      , "-Xasync"
+//      , "-Xsource:3"
+//      , "-opt:inline:app.**,client.**,concurrent.**,protocol.**"
+      , "-release"
+      , "17"
     ]
 }

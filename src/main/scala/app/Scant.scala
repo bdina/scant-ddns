@@ -1,6 +1,6 @@
 package app
 
-object Scant extends App with ScantLogging with SystemManagement {
+object Scant extends SystemManagement with ScantLogging {
   import java.util.Properties
 
   def configuration(): Properties = {
@@ -26,57 +26,55 @@ object Scant extends App with ScantLogging with SystemManagement {
   val greeting = s"Scant DDNS $appVersion: a hardly sufficient Dynamic DNS updater"
   override def toString() = greeting
 
-  val (host, domain) = hostAndDomain()
+  @main def scantApp(daemon: Boolean) = {
+    val (host, domain) = hostAndDomain()
 
-  val daemon = if (args.length == 1) args(0) == "-d" else false
+    import protocol._
+    implicit val dnsProvider : DNSProvider = SimpleDNSProvider()
 
-  import protocol._
-  implicit val dnsProvider = SimpleDNSProvider()
+    val ddnsProvider = NamecheapDDNSProvider()
+    val failoverProvider = OpenDNSExternalIPProvider() /* FIX seg fault */
 
-  val ddnsProvider = NamecheapDDNSProvider()
-  val failoverProvider = OpenDNSExternalIPProvider() /* FIX seg fault */
+    logger.info(s"Start $this ($availableProcessors cpu cores) - dns provider $dnsProvider :: ddns provider $ddnsProvider (runtime $runtimeVersion)")
 
-  logger.info(s"Start $this ($availableProcessors cpu cores) - dns provider $dnsProvider :: ddns provider $ddnsProvider (runtime $runtimeVersion)")
+    import java.net.InetAddress
+    import scala.concurrent.Future
 
-  import java.net.InetAddress
-  import scala.concurrent.Future
-  import scala.async.Async.{async,await}
-
-  def update()(implicit ec: scala.concurrent.ExecutionContext): Future[Unit] = {
-    logMemoryStats()
-    async {
-      val host_ip = ExternalIPProvider.failover(failoverProvider)
-      val dns_ip = DNSProvider.dns_lookup(host, domain)
-      (await(host_ip), await(dns_ip))
-    }.map {
-      case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) if (dnsAddress != externalAddress) =>
-        logger.info(s"updating DDNS via $ddnsProvider")
-        ddnsProvider.update(host, domain, externalAddress)
-      case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) =>
-        logger.info(s"nothing to update")
-      case (None, Some(_)) =>
-        logger.severe("unable to fetch external IP!")
-      case (Some(_), None) =>
-        logger.severe("unable to fetch host record")
-      case (None, None) =>
-        logger.severe("unable to fetch external IP and host record")
-    }.recover {
-      case exception => logger.severe(s"unable to process: ${exception.getMessage}")
+    def update()(implicit ec: scala.concurrent.ExecutionContext): Future[Unit] = {
+      logMemoryStats()
+      (for {
+        host_ip <- ExternalIPProvider.failover(failoverProvider)
+        dns_ip <- DNSProvider.dns_lookup(host, domain)
+      } yield (host_ip, dns_ip)).map {
+        case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) if (dnsAddress != externalAddress) =>
+          logger.info(s"updating DDNS via $ddnsProvider")
+          ddnsProvider.update(host, domain, externalAddress)
+        case (Some(externalAddress: InetAddress), Some(dnsAddress: InetAddress)) =>
+          logger.info(s"nothing to update")
+        case (None, Some(_)) =>
+          logger.severe("unable to fetch external IP!")
+        case (Some(_), None) =>
+          logger.severe("unable to fetch host record")
+        case (None, None) =>
+          logger.severe("unable to fetch external IP and host record")
+      }.recover {
+        case exception => logger.severe(s"unable to process: ${exception.getMessage}")
+      }
     }
-  }
 
-  if (!daemon) {
-    implicit val ec = scala.concurrent.ExecutionContext.global
-    update()
-  } else {
-    val factory = concurrent.ScheduledExecutionContext.ScheduledThreadFactory()
-    implicit val ec = concurrent.ScheduledExecutionContext(corePoolSize=1,threadFactory=factory)
+    if (!daemon) {
+      implicit val ec = scala.concurrent.ExecutionContext.global
+      update()
+    } else {
+      val factory = concurrent.ScheduledExecutionContext.ScheduledThreadFactory()
+      implicit val ec = concurrent.ScheduledExecutionContext(corePoolSize=1,threadFactory=factory)
 
-    import scala.concurrent.duration._
-    val duration = 1.minutes
-    val delay = 0.seconds
+      import scala.concurrent.duration._
+      val duration = 1.minutes
+      val delay = 0.seconds
 
-    logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
-    ec.scheduleAtFixedRate(period=duration, initialDelay=delay) { update() }
+      logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
+      ec.scheduleAtFixedRate(period=duration, initialDelay=delay) { update() }
+    }
   }
 }

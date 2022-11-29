@@ -92,11 +92,14 @@ object SimpleDnsClient extends app.ScantLogging {
           logger.fine(f"Additional RRs: 0x${din.readShort()}%x")
 
           var recLen = din.readByte()
+
+          while
+            recLen > 0
           do {
             val record = din.read(new Array[Byte](recLen))
             logger.fine(s"Record: $record")
             recLen = din.readByte()
-          } while (recLen > 0)
+          }
 
           logger.finest(f"Record Type: 0x${din.readShort()}%x")
           logger.finest(f"Class: 0x${din.readShort()}%x")
