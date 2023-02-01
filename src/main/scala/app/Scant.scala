@@ -2,6 +2,7 @@ package app
 
 object Scant extends App with ScantLogging with SystemManagement {
   import java.util.Properties
+  import app.network._
 
   def configuration(): Properties = {
     import java.nio.file.{Files,Paths,StandardOpenOption}

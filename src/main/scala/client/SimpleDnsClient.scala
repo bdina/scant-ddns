@@ -1,6 +1,6 @@
 package client
 
-import app.{Domain,Host}
+import app.network.{Domain,Host}
 import java.net.InetAddress
 
 import scala.util.Using
@@ -25,7 +25,7 @@ object SimpleDnsClient extends app.ScantLogging {
 
   object Request {
     case class Question(host: Host, domain: Domain) {
-      val fqdn = s"${host.name}.${domain.name}"
+      val fqdn = s"${host}.${domain}"
       val domainParts = fqdn.split("\\.")
       logger.fine(s"$fqdn has ${domainParts.length} parts")
       def frame(): Array[Byte] = {
@@ -176,7 +176,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
       }.getOrElse(None)
     }
 
-    logger.info(s"query DNS - fetch host [${host.name}] of domain [${domain.name}]")
+    logger.info(s"query DNS - fetch host [${host}] of domain [${domain}]")
     cached_address.fold (_query(host,domain)) { case (address,ttl,question) =>
       if (Instant.now().isBefore(ttl)) {
         logger.fine("CACHE HIT")

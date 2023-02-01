@@ -16,7 +16,7 @@ case class SimpleDNSProvider(val resolver: InetAddress = SimpleDNSProvider.dnsSe
   val dnsClient = SimpleDnsClient(resolver)
   logger.info(s"CREATED with resolver: ${resolver.getHostAddress}")
 
-  import app.{Domain,Host}
+  import app.network.{Domain,Host}
   override def address(host: Host, domain: Domain): Option[InetAddress] = dnsClient.query(host,domain)
 
   override def toString(): String = s"SimpleDNSProvider [ resolver ${resolver.getHostAddress} ]"

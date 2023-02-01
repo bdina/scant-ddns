@@ -1,6 +1,6 @@
 package protocol
 
-import app.{Domain,Host}
+import app.network.{Domain,Host}
 import java.net.InetAddress
 
 trait DNSProvider {

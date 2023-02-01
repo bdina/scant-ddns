@@ -15,7 +15,7 @@ case class NamecheapDDNSProvider() extends DDNSProvider {
 
   import java.net.{InetAddress,URI}
 
-  import app.{Domain,Host}
+  import app.network.{Domain,Host}
   import protocol.NamecheapDNSProvider._
 
   import protocol.http._
@@ -24,7 +24,7 @@ case class NamecheapDDNSProvider() extends DDNSProvider {
   override def update(host: Host, domain: Domain, address: InetAddress): Unit = {
     val password = ddnsPassword()
 
-    val queryParams = s"host=${host.name}&domain=${domain.name}&password=$password&ip=${address.getHostAddress}"
+    val queryParams = s"host=${host}&domain=${domain}&password=$password&ip=${address.getHostAddress}"
     val ddnsUpdate = s"$DdnsUrlPrefix?$queryParams"
 
     val ddnsUri = new URI(ddnsUpdate)

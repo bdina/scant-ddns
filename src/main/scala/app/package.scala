@@ -1,7 +1,22 @@
 package app
 
-case class Host(val name: String) extends AnyVal
-case class Domain(val name: String) extends AnyVal
+package object network {
+  object Tags {
+    sealed class Host
+    sealed class Domain
+  }
+  import scalaz.{@@, Tag => _Tag}
+  type Host = String @@ Tags.Host
+  object Host {
+    def apply(name: String) = _Tag[String, Tags.Host](name)
+    def unapply(name: Host) = Some(_Tag.unwrap(name))
+  }
+  type Domain = String @@ Tags.Domain
+  object Domain {
+    def apply(name: String) = _Tag[String, Tags.Domain](name)
+    def unapply(name: Domain) = Some(_Tag.unwrap(name))
+  }
+}
 
 trait ScantLogging {
   import java.util.logging.Logger

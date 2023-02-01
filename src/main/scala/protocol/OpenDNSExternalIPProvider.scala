@@ -1,6 +1,6 @@
 package protocol
 
-import app.{Domain,Host}
+import app.network.{Domain,Host}
 import client.SimpleDnsClient
 
 import java.net.InetAddress
