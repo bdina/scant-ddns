@@ -78,7 +78,16 @@ object SimpleDnsClient extends app.ScantLogging {
   }
 
   object Response {
-    case class Question(address: InetAddress, ttl: Long)
+    object Tags {
+      sealed class TTL
+    }
+    import scalaz.{@@, Tag => _Tag}
+    type TTL = Long @@ Tags.TTL
+    object TTL {
+      def apply(time: Long) = _Tag[Long, Tags.TTL](time)
+      def unapply(time: TTL) = Some(_Tag.unwrap(time))
+    }
+    case class Question(address: InetAddress, ttl: TTL)
     object Question {
       def apply(buf: Array[Byte]): Option[Question] = {
         import java.io.{ByteArrayInputStream, DataInputStream}
@@ -121,7 +130,7 @@ object SimpleDnsClient extends app.ScantLogging {
               None
             } else {
               logger.info(s"DNS response to question was $dnsIp")
-              Some(Question(InetAddress.getByName(dnsIp), ttl))
+              Some(Question(InetAddress.getByName(dnsIp), TTL(ttl)))
             }
           } else {
             None
@@ -168,7 +177,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
         dnsIp.map { case response =>
           val address = response.address
-          val ttl = response.ttl
+          val Response.TTL(ttl) = response.ttl
           logger.info(s"cache DNS response [${address.getHostAddress}] for $ttl seconds")
           this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
           address
