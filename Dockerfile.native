@@ -6,11 +6,11 @@ FROM ubuntu:22.04 AS build
 
 ARG CPU_ARCH=amd64
 
-ARG GRAALVM_VERSION=22.3.1
-ARG JAVA_VERSION=19
+ARG GRAALVM_VERSION=22.3.2
+ARG JAVA_VERSION=17
 ARG GRAALVM_WORKDIR=/graalvm/src/project
 
-ARG GRADLE_VERSION=7.6
+ARG GRADLE_VERSION=8.1.1
 
 # Install tools required for project
 # Run `docker build --no-cache .` to update dependencies
@@ -45,7 +45,6 @@ RUN ./configure --prefix=${TOOLCHAIN_DIR} --static \
  && rm -rf /tmp/zlib-${ZLIB_VERSION}/
 
 ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
-ENV SCALA_HOME=/opt/scala-${SCALA_VERSION}
 ENV GRAALVM_HOME=/opt/graalvm-ce-java${JAVA_VERSION}-${GRAALVM_VERSION}
 ENV JAVA_HOME=${GRAALVM_HOME}
 ENV PATH=${GRAALVM_HOME}/bin:${GRADLE_HOME}/bin:${SCALA_HOME}/bin:${PATH}

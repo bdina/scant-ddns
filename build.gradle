@@ -2,7 +2,7 @@ import compiler.NativeImage
 
 plugins {
   id 'compiler.native-image'
-  id 'com.github.johnrengelman.shadow' version '7.1.2'
+  id 'com.github.johnrengelman.shadow' version '8.1.0'
   id 'com.palantir.git-version' version '0.13.0'
 }
 
@@ -18,7 +18,7 @@ repositories {
 
 ext {
     scala_maj = '2.13'
-    scala_ver = "${scala_maj}.10"
+    scala_ver = "${scala_maj}.11"
 }
 
 dependencies {
@@ -41,7 +41,7 @@ dependencies {
 version gitVersion()
 
 application {
-    mainClass.set("app.Scant")
+    mainClass.set('app.Scant')
 }
 
 processResources {
@@ -61,14 +61,14 @@ sourceSets {
 }
 
 task repl(type:JavaExec) {
-    mainClass = "scala.tools.nsc.MainGenericRunner"
+    mainClass = 'scala.tools.nsc.MainGenericRunner'
     classpath = sourceSets.main.runtimeClasspath
     standardInput System.in
     args '-usejavacp'
 }
 
 shadowJar {
-    classifier = ''
+    archiveClassifier = ''
     manifest {
         attributes 'App-Version': gitVersion()
     }
@@ -90,12 +90,14 @@ nativeImage {
 
 compileScala {
     scalaCompileOptions.additionalParameters = [
-        "-feature"
-      , "-deprecation"
-      , "-unchecked"
-      , "-Xlint"
-      , "-Xfatal-warnings"
-      , "-Xasync"
-      , "-Xsource:3"
+        '-feature'
+      , '-deprecation'
+      , '-unchecked'
+      , '-Xlint'
+      , '-Xfatal-warnings'
+      , '-Xasync'
+      , '-Xsource:3'
+      , '-release'
+      , '17'
     ]
 }
