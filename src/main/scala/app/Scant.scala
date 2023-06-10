@@ -32,10 +32,9 @@ object Scant extends App with ScantLogging with SystemManagement {
   val daemon = if (args.length == 1) args(0) == "-d" else false
 
   import protocol._
-  implicit val dnsProvider = SimpleDNSProvider()
+  implicit val dnsProvider: DNSProvider = SimpleDNSProvider()
 
   val ddnsProvider = NamecheapDDNSProvider()
-  val failoverProvider = OpenDNSExternalIPProvider() /* FIX seg fault */
 
   logger.info(s"Start $this ($availableProcessors cpu cores) - dns provider $dnsProvider :: ddns provider $ddnsProvider (runtime $runtimeVersion)")
 
@@ -46,7 +45,7 @@ object Scant extends App with ScantLogging with SystemManagement {
   def update()(implicit ec: scala.concurrent.ExecutionContext): Future[Unit] = {
     logMemoryStats()
     async {
-      val host_ip = ExternalIPProvider.failover(failoverProvider)
+      val host_ip = ExternalIPProvider.failover()
       val dns_ip = DNSProvider.dns_lookup(host, domain)
       (await(host_ip), await(dns_ip))
     }.map {
