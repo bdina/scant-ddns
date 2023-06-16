@@ -85,6 +85,7 @@ nativeImage {
       NativeImage.Option.STATIC
     , NativeImage.Option.MUSL
     , NativeImage.Option.LINK_BUILD
+    , NativeImage.Option.CPU
     ]
 }
 
