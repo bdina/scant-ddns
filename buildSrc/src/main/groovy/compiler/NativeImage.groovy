@@ -11,6 +11,9 @@ class NativeImage extends DefaultTask {
         STATIC('--static')
       , MUSL('--libc=musl')
       , LINK_BUILD('--link-at-build-time')
+      , G1GC('--gc=G1')
+      , CPU('-march=native')
+      , PGO('--pgo')
       String arg
       private Option(String s) { this.arg = s }
     }
