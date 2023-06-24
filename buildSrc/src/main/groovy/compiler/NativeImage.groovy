@@ -31,7 +31,7 @@ class NativeImage extends DefaultTask {
     Integer maxNew = 32
 
     @InputDirectory
-    File dir = project.buildDir
+    File buildDir = project.buildDir
 
     @TaskAction
     void runCommand() {
@@ -40,11 +40,11 @@ class NativeImage extends DefaultTask {
         , "-R:MaxHeapSize=${maxHeap}m"
         , "-R:MaxNewSize=${maxNew}m"
         ]
-        def source = [ '-jar', "${project.buildDir}/libs/ddns-${project.version}.jar" ]
+        def source = [ '-jar', "${project.buildDir}/libs/${project.name}-${project.version}.jar" ]
         def command = EXECUTABLE + parameters*.arg + heap + source
-        logger.lifecycle "Executing native-image command: '${command.join(' ')}'"
+        logger.lifecycle "Executing native-image command -> '${command.join(' ')}'"
 
-        def process = command.execute(null, dir)
+        def process = command.execute(null, buildDir)
         process.consumeProcessOutput(System.out, System.err)
         process.waitFor()
 
@@ -60,6 +60,6 @@ import org.gradle.api.Project
 
 class NativeImagePlugin implements Plugin<Project> {
     void apply(Project project) {
-        project.task("nativeImage", type: NativeImage)
+        project.task('nativeImage', type: NativeImage)
     }
 }
