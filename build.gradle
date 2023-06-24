@@ -2,6 +2,7 @@ import compiler.NativeImage
 
 plugins {
   id 'compiler.native-image'
+  id 'compiler.scala-cli'
   id 'com.github.johnrengelman.shadow' version '8.1.0'
   id 'com.palantir.git-version' version '1.0.0'
 }
@@ -87,6 +88,13 @@ nativeImage {
     , NativeImage.Option.LINK_BUILD
     , NativeImage.Option.CPU
     ]
+}
+
+scalaCli {
+    dependsOn clean
+
+    minHeap 1
+    maxHeap 8
 }
 
 compileScala {
