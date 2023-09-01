@@ -3,7 +3,7 @@ import compiler.NativeImage
 plugins {
   id 'compiler.native-image'
   id 'compiler.scala-cli'
-  id 'com.github.johnrengelman.shadow' version '8.1.0'
+  id 'com.github.johnrengelman.shadow' version '8.1.1'
   id 'com.palantir.git-version' version '1.0.0'
 }
 
