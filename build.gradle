@@ -19,7 +19,7 @@ repositories {
 
 ext {
     scala_maj = '2.13'
-    scala_ver = "${scala_maj}.11"
+    scala_ver = "${scala_maj}.12"
 }
 
 dependencies {
