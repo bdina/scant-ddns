@@ -40,7 +40,7 @@ class NativeImage extends DefaultTask {
         , "-R:MaxHeapSize=${maxHeap}m"
         , "-R:MaxNewSize=${maxNew}m"
         ]
-        def source = [ '-jar', "${project.buildDir}/libs/${project.name}-${project.version}.jar" ]
+        def source = [ '--strict-image-heap', '-jar', "${project.buildDir}/libs/${project.name}-${project.version}.jar", '-o', "${project.name}" ]
         def command = EXECUTABLE + parameters*.arg + heap + source
         logger.lifecycle "Executing native-image command -> '${command.join(' ')}'"
 
