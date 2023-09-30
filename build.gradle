@@ -107,6 +107,6 @@ compileScala {
       , '-Xasync'
       , '-Xsource:3'
       , '-release'
-      , '20'
+      , '21'
     ]
 }
