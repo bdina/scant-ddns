@@ -28,9 +28,9 @@ dependencies {
     implementation group: 'org.scala-lang' , name: 'scala-reflect'  , version: scala_ver
 
     implementation group: 'org.scala-lang.modules', name: "scala-async_${scala_maj}", version: '1.0.1'
-    implementation group: 'org.scala-lang.modules', name: "scala-xml_${scala_maj}", version: '2.1.0'
+    implementation group: 'org.scala-lang.modules', name: "scala-xml_${scala_maj}", version: '2.2.0'
 
-    implementation group: 'org.scalaz', name: "scalaz-core_${scala_maj}", version: '7.3.7'
+    implementation group: 'org.scalaz', name: "scalaz-core_${scala_maj}", version: '7.3.8'
 
     testImplementation group: 'org.scalatest', name: "scalatest_${scala_maj}", version: '3.2.9'
     testImplementation group: 'org.scalactic', name: "scalactic_${scala_maj}", version: '3.2.9'
