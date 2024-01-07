@@ -45,7 +45,7 @@ class ScalaCli extends DefaultTask {
             }
             .join(' ')
 
-        def command = "scala-cli --power package ${sources} --scala ${project.ext.scala_ver} -Xasync ${dStr} -o ${project.name} --java-opt -Xmx${maxHeap}m --java-opt -Xms${minHeap}m"
+        def command = "scala-cli --power package ${sources} --scala ${project.ext.scala_ver} --native -Xasync ${dStr} -o ${project.name}"
         logger.lifecycle "Executing scala-cli command -> ${command}"
 
         def process = command.execute(null, project.buildDir)
