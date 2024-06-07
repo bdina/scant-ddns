@@ -19,7 +19,7 @@ repositories {
 
 ext {
     scala_maj = '2.13'
-    scala_ver = "${scala_maj}.12"
+    scala_ver = "${scala_maj}.14"
 }
 
 dependencies {
@@ -85,7 +85,6 @@ nativeImage {
     parameters = [
       NativeImage.Option.STATIC
     , NativeImage.Option.MUSL
-    , NativeImage.Option.LINK_BUILD
     , NativeImage.Option.CPU
     ]
 }
@@ -107,6 +106,6 @@ compileScala {
       , '-Xasync'
       , '-Xsource:3'
       , '-release'
-      , '21'
+      , '22'
     ]
 }

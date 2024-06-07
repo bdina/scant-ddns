@@ -21,7 +21,7 @@ class NativeImage extends DefaultTask {
     static final List<String> EXECUTABLE = [ 'native-image' ]
 
     @Input
-    List<Option> parameters = [ Option.STATIC, Option.MUSL, Option.LINK_BUILD ]
+    List<Option> parameters = [ Option.STATIC, Option.MUSL ]
 
     @Input
     Integer minHeap = 1
@@ -40,7 +40,7 @@ class NativeImage extends DefaultTask {
         , "-R:MaxHeapSize=${maxHeap}m"
         , "-R:MaxNewSize=${maxNew}m"
         ]
-        def source = [ '--strict-image-heap', '-jar', "${project.buildDir}/libs/${project.name}-${project.version}.jar", '-o', "${project.name}" ]
+        def source = [ '-jar', "${project.buildDir}/libs/${project.name}-${project.version}.jar", '-o', "${project.name}" ]
         def command = EXECUTABLE + parameters*.arg + heap + source
         logger.lifecycle "Executing native-image command -> '${command.join(' ')}'"
 
