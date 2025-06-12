@@ -6,7 +6,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class ScalaCli extends DefaultTask {
+class ScalaCliTask extends DefaultTask {
     enum Option {
         ASYNC('--Xasync')
       , PACKAGE('--power package')
@@ -63,7 +63,19 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class ScalaCliPlugin implements Plugin<Project> {
+    @Override
     void apply(Project project) {
-        project.task('scalaCli', type: ScalaCli)
+        // Delay task registration until after evaluation
+        project.afterEvaluate {
+            if (!project.plugins.hasPlugin("com.github.johnrengelman.shadow")) {
+                throw new IllegalStateException("The Shadow plugin must be applied for 'scalaCli' to work.")
+            }
+
+            project.tasks.register('scalaCli', ScalaCliTask) { task ->
+                dependsOn project.tasks.named('shadowJar')
+                group = 'verification'
+                description = 'Runs scala-cli using a shadowJar'
+            }
+        }
     }
 }

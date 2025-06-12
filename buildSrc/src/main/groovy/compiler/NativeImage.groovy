@@ -6,7 +6,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class NativeImage extends DefaultTask {
+class NativeImageTask extends DefaultTask {
     enum Option {
         STATIC('--static')
       , MUSL('--libc=musl')
@@ -59,7 +59,19 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class NativeImagePlugin implements Plugin<Project> {
+    @Override
     void apply(Project project) {
-        project.task('nativeImage', type: NativeImage)
+        // Delay task registration until after evaluation
+        project.afterEvaluate {
+            if (!project.plugins.hasPlugin("com.github.johnrengelman.shadow")) {
+                throw new IllegalStateException("The Shadow plugin must be applied for 'nativeImage' to work.")
+            }
+
+            project.tasks.register('nativeImage', NativeImageTask) { task ->
+                dependsOn project.tasks.named('shadowJar')
+                group = 'verification'
+                description = 'Builds a native image from a shadowJar'
+            }
+        }
     }
 }
