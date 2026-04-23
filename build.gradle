@@ -1,9 +1,9 @@
-import compiler.NativeImage
+import compiler.NativeImageTask
 
 plugins {
   id 'compiler.native-image'
   id 'compiler.scala-cli'
-  id 'com.github.johnrengelman.shadow' version '8.1.1'
+  id 'com.gradleup.shadow' version '9.3.1'
   id 'com.palantir.git-version' version '1.0.0'
 }
 
@@ -19,7 +19,7 @@ repositories {
 
 ext {
     scala_maj = '2.13'
-    scala_ver = "${scala_maj}.14"
+    scala_ver = "${scala_maj}.16"
 }
 
 dependencies {
@@ -32,11 +32,11 @@ dependencies {
 
     implementation group: 'org.scalaz', name: "scalaz-core_${scala_maj}", version: '7.3.8'
 
-    testImplementation group: 'org.scalatest', name: "scalatest_${scala_maj}", version: '3.2.9'
-    testImplementation group: 'org.scalactic', name: "scalactic_${scala_maj}", version: '3.2.9'
+    testImplementation group: 'org.scalatest', name: "scalatest_${scala_maj}", version: '3.2.19'
+    testImplementation group: 'org.scalactic', name: "scalactic_${scala_maj}", version: '3.2.19'
 
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-    testImplementation group: 'org.scalatestplus', name: "junit-4-13_${scala_maj}", version: '3.2.9.0'
+    testImplementation group: 'org.scalatestplus', name: "junit-4-13_${scala_maj}", version: '3.2.19.0'
 }
 
 version gitVersion()
@@ -83,9 +83,9 @@ nativeImage {
     maxNew 3
 
     parameters = [
-      NativeImage.Option.STATIC
-    , NativeImage.Option.MUSL
-    , NativeImage.Option.CPU
+      NativeImageTask.Option.STATIC
+    , NativeImageTask.Option.MUSL
+    , NativeImageTask.Option.CPU
     ]
 }
 
