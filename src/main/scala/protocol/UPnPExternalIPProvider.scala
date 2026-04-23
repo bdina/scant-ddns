@@ -88,6 +88,9 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
 
   import protocol.net._
 
+  def decodeSsdpResponse(data: Array[Byte], length: Int): String =
+    new String(data, 0, length, java.nio.charset.StandardCharsets.UTF_8).trim
+
   override def address(): Option[InetAddress] = {
     val ssdpRequestBytes = ssdpRequest.getBytes
 
@@ -98,7 +101,7 @@ case class UPnPExternalIPProvider() extends ExternalIPProvider with app.ScantLog
       (for {
         _ <- socket.trySend(request).toOption
         packet <- socket.tryReceive(bytes=8192).toOption
-        response = new String(packet.getData).trim
+        response = decodeSsdpResponse(packet.getData, packet.getLength)
       } yield {
         response
       }).flatMap { case data =>

@@ -3,14 +3,17 @@ package app
 object Scant extends ScantLogging with SystemManagement {
   import java.util.Properties
   import app.network._
+  import scala.util.Using
 
-  def configuration(): Properties = {
+  private lazy val loadedConfiguration: Properties = {
     import java.nio.file.{Files,Paths,StandardOpenOption}
-    val fin = Files.newInputStream(Paths.get("ddns.properties"), StandardOpenOption.READ)
     val properties = new Properties()
-    properties.load(fin)
+    Using.resource(Files.newInputStream(Paths.get("ddns.properties"), StandardOpenOption.READ)) { fin =>
+      properties.load(fin)
+    }
     properties
   }
+  def configuration(): Properties = loadedConfiguration
 
   def hostAndDomain(): (Host, Domain) = {
     val config = configuration()
@@ -63,7 +66,13 @@ object Scant extends ScantLogging with SystemManagement {
 
     if (!daemon) {
       implicit val ec = scala.concurrent.ExecutionContext.global
-      update()
+      import scala.concurrent.Await
+      import scala.concurrent.duration._
+      try {
+        Await.result(update(), 15.seconds)
+      } finally {
+        concurrent.BlockingExecutionContext.shutdown()
+      }
     } else {
       val factory = concurrent.ScheduledExecutionContext.ScheduledThreadFactory()
       implicit val ec = concurrent.ScheduledExecutionContext(corePoolSize=1,threadFactory=factory)
@@ -74,6 +83,10 @@ object Scant extends ScantLogging with SystemManagement {
 
       logger.info(s"running deamonized - scheduled task to execute on $duration duration after $delay delay")
       ec.scheduleAtFixedRate(period=duration, initialDelay=delay) { update() }
+      Runtime.getRuntime.addShutdownHook(new Thread(() => {
+        ec.shutdown(timeout=5)
+        concurrent.BlockingExecutionContext.shutdown()
+      }))
     }
   }
 }

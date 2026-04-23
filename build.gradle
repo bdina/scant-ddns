@@ -10,6 +10,12 @@ plugins {
 apply plugin: 'scala'
 apply plugin: 'application'
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
 repositories {
     mavenCentral()
     maven {
@@ -95,6 +101,6 @@ tasks.withType(ScalaCompile).configureEach {
         '-feature'
       , '-Werror'
       , '-java-output-version'
-      , '21'
+      , '25'
     ]
 }

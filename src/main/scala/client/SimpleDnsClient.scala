@@ -17,10 +17,10 @@ object SimpleDnsClient extends app.ScantLogging {
 
   def dnsServerAddress(): InetAddress = InetAddress.getByName(DefaultServerAddress)
 
-  val clientIdBytes = new Array[Byte](2)
   def clientId(): Short = {
-    ThreadLocalRandom.current.nextBytes(clientIdBytes)
-    ByteBuffer.wrap(clientIdBytes).getShort
+    val bytes = new Array[Byte](2)
+    ThreadLocalRandom.current.nextBytes(bytes)
+    ByteBuffer.wrap(bytes).getShort
   }
 
   object Request {
@@ -99,8 +99,7 @@ object SimpleDnsClient extends app.ScantLogging {
 
           var recLen = din.readByte()
           while (recLen > 0) {
-            val record = din.read(new Array[Byte](recLen))
-            logger.fine(s"Record: $record")
+            din.skipBytes(recLen)
             recLen = din.readByte()
           }
 
@@ -144,12 +143,20 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
   import java.net.{DatagramPacket, DatagramSocket}
   import java.time.Instant
+  import java.util.concurrent.atomic.AtomicReference
 
   import client.SimpleDnsClient._
 
   import protocol.net._
 
-  private var cached_address: Option[(InetAddress,Instant,Request.Question)] = None
+  private case class CachedAddress(
+      host: Host
+    , domain: Domain
+    , address: InetAddress
+    , expiresAt: Instant
+    )
+
+  private val cachedAddressRef = new AtomicReference[Option[CachedAddress]](None)
 
   override def query(host: Host, domain: Domain): Option[InetAddress] = {
     def _query(host: Host
@@ -176,21 +183,23 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
           val address = response.address
           val ttl = Response.TTL.value(response.ttl)
           logger.info(s"cache DNS response [${address.getHostAddress}] for $ttl seconds")
-          this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
+          val expiresAt = Instant.now.plusSeconds(ttl)
+          cachedAddressRef.set(Some(CachedAddress(host, domain, address, expiresAt)))
           address
         }
       }.getOrElse(None)
     }
 
     logger.info(s"query DNS - fetch host [${host}] of domain [${domain}]")
-    cached_address.fold (_query(host,domain)) { case (address,ttl,question) =>
-      if (Instant.now().isBefore(ttl)) {
+    cachedAddressRef.get().fold(_query(host,domain)) { cachedAddress =>
+      val isSameQuery = cachedAddress.host == host && cachedAddress.domain == domain
+      if (isSameQuery && Instant.now().isBefore(cachedAddress.expiresAt)) {
         logger.fine("CACHE HIT")
-        Some(address)
+        Some(cachedAddress.address)
       } else {
         logger.fine("cached value expired - invalidating")
-        this.cached_address = None
-        _query(host, domain, question)
+        cachedAddressRef.set(None)
+        _query(host, domain)
       }
     }
   }

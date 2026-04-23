@@ -8,6 +8,11 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import java.io.{ByteArrayOutputStream, DataOutputStream}
 import client.SimpleDnsClient
+import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 @RunWith(classOf[JUnitRunner])
 class SimpleDNSProviderSpec extends AnyFlatSpec with Matchers {
@@ -47,5 +52,25 @@ class SimpleDNSProviderSpec extends AnyFlatSpec with Matchers {
 
     val parsed = SimpleDnsClient.Response.Question(out.toByteArray)
     parsed.map(_.address) shouldBe Some(InetAddress.getByName("93.184.216.34"))
+  }
+
+  "SimpleDnsClient.clientId" should "be safe under concurrent generation" in {
+    implicit val ec: ExecutionContext = ExecutionContext.global
+    val ids = ConcurrentHashMap.newKeySet[Short]()
+    val parallel = 16
+    val perWorker = 512
+
+    Await.result(
+      Future.sequence((0 until parallel).map { _ =>
+        Future {
+          (0 until perWorker).foreach { _ =>
+            ids.add(SimpleDnsClient.clientId())
+          }
+        }
+      }),
+      5.seconds
+    )
+
+    ids.size() should be > (parallel * perWorker / 4)
   }
 }

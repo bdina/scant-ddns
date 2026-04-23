@@ -72,4 +72,4 @@ COPY --from=build /graalvm/src/project/build/ddns /graalvm/src/project/ddns.prop
 # And we finally create the application layer
 FROM app-stage AS app
 ENTRYPOINT [ "./ddns" ]
-CMD [ "-XX:+PrintGC" , "-XX:+VerboseGC" , "-d" ]
+CMD [ "-d" ]

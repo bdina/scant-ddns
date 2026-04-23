@@ -8,6 +8,6 @@ trait DNSProvider {
 }
 object DNSProvider {
   import scala.concurrent.Future
-  def dns_lookup(host: Host, domain: Domain)(implicit dnsProvider: DNSProvider, ec: scala.concurrent.ExecutionContext) =
-    Future { dnsProvider.address(host, domain) }
+  def dns_lookup(host: Host, domain: Domain)(using dnsProvider: DNSProvider): Future[Option[InetAddress]] =
+    Future { dnsProvider.address(host, domain) }(using concurrent.BlockingExecutionContext.executionContext)
 }

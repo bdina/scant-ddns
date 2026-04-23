@@ -1,45 +1,50 @@
-# To build image Run `docker build --tag ddns:<version> .`
+# To build image run `docker build -f Dockerfile.jvm --tag ddns-jvm:<version> .`
 
-ARG OPENJDK_VERSION=11
-ARG OPENJDK_WORKDIR=/openjdk/src/project
+FROM ubuntu:24.04 AS build
 
-# Multi-stage image ... creates intermediate layer(s) for doing the graalvm native
-# build (this is discarded by docker post-build)
-FROM openjdk:${OPENJDK_VERSION}-jdk-alpine AS build
+ARG JAVA_VERSION=25.0.2
+ARG GRADLE_VERSION=9.3.1
+ARG PROJECT_WORKDIR=/openjdk/src/project
 
-ARG GRADLE_VERSION=7.3.3
-
-# Install tools required for project
-# Run `docker build --no-cache .` to update dependencies
-RUN apk update \
- && apk add wget unzip \
+RUN apt-get update -y \
+ && apt-get upgrade -y \
+ && apt-get install -y wget unzip ca-certificates \
+ && apt-get autoremove --purge -y \
+ && wget https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${JAVA_VERSION}/graalvm-community-jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -P /tmp \
+ && mkdir -p /opt/graalvm-community-jdk-${JAVA_VERSION} \
+ && tar zxvf /tmp/graalvm-community-jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -C /opt/graalvm-community-jdk-${JAVA_VERSION} --strip-components 1 \
  && wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -P /tmp \
- && unzip -d /opt/gradle /tmp/gradle-${GRADLE_VERSION}-bin.zip
+ && unzip -d /opt /tmp/gradle-${GRADLE_VERSION}-bin.zip
 
-ENV GRADLE_HOME=/opt/gradle/gradle-${GRADLE_VERSION}
-ENV PATH=${GRADLE_HOME}/bin:${PATH}
+ENV JAVA_HOME=/opt/graalvm-community-jdk-${JAVA_VERSION}
+ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
+ENV PATH=${JAVA_HOME}/bin:${GRADLE_HOME}/bin:${PATH}
 
-WORKDIR /openjdk/src/project
+WORKDIR ${PROJECT_WORKDIR}
 
-# Copy the entire project and build it
-# This layer is rebuilt when a file changes in the project directory
-COPY . /openjdk/src/project
+COPY . ${PROJECT_WORKDIR}
 RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar
 
-# This results in a single layer image
-#FROM alpine AS ddns
-FROM openjdk:${OPENJDK_VERSION}-jre-alpine AS ddns-base
+FROM ubuntu:24.04 AS ddns-base
 
-ARG OPENJDK_WORKDIR
+ARG JAVA_VERSION=25.0.2
+ARG PROJECT_WORKDIR=/openjdk/src/project
 
+RUN apt-get update -y \
+ && apt-get install -y wget ca-certificates \
+ && apt-get autoremove --purge -y \
+ && wget https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${JAVA_VERSION}/graalvm-community-jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -P /tmp \
+ && mkdir -p /opt/graalvm-community-jdk-${JAVA_VERSION} \
+ && tar zxvf /tmp/graalvm-community-jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -C /opt/graalvm-community-jdk-${JAVA_VERSION} --strip-components 1
+
+ENV JAVA_HOME=/opt/graalvm-community-jdk-${JAVA_VERSION}
 ENV DDNS_HOME=/opt/ddns
-ENV PATH=${DDNS_HOME}/bin:${PATH}
+ENV PATH=${JAVA_HOME}/bin:${DDNS_HOME}/bin:${PATH}
 
 WORKDIR ${DDNS_HOME}
 
-COPY --from=build ${OPENJDK_WORKDIR}/ddns* ${OPENJDK_WORKDIR}/build/libs/* ${DDNS_HOME}/
+COPY --from=build ${PROJECT_WORKDIR}/ddns* ${PROJECT_WORKDIR}/build/libs/* ${DDNS_HOME}/
 
-# And we finally create the application layer
 FROM ddns-base AS ddns
 ENTRYPOINT [ "java" ]
-#CMD [ "-Djava.net.preferIPv4Stack=true" , "-jar" , "ddns.jar" , "-d" ]
+CMD [ "-jar" , "ddns.jar" , "-d" ]

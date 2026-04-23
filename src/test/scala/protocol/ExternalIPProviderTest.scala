@@ -30,4 +30,18 @@ class ExternalIPProviderSpec extends AnyFlatSpec with Matchers {
     scala.concurrent.Await.result(ExternalIPProvider.failover(primary, secondary), 2.seconds) shouldBe
       Some(InetAddress.getByName("203.0.113.2"))
   }
+
+  it should "evaluate on blocking execution context threads" in {
+    @volatile var executingThread = ""
+    val primary = new ExternalIPProvider {
+      override def address(): Option[InetAddress] = {
+        executingThread = Thread.currentThread().getName
+        Some(InetAddress.getByName("203.0.113.1"))
+      }
+    }
+
+    scala.concurrent.Await.result(ExternalIPProvider.failover(primary), 2.seconds) shouldBe
+      Some(InetAddress.getByName("203.0.113.1"))
+    executingThread.startsWith("scant-blocking-io-") shouldBe true
+  }
 }

@@ -45,4 +45,13 @@ class UPnPExternalIPProviderSpec extends AnyFlatSpec with Matchers {
 
     UPnPExternalIPProvider.externalIpFromSoapResponse(soap) shouldBe Some(InetAddress.getByName("203.0.113.7"))
   }
+
+  "UPnPExternalIPProvider.decodeSsdpResponse" should "decode only received packet length" in {
+    val payload = "HTTP/1.1 200 OK\r\nLOCATION: http://192.168.1.1:1900/device.xml\r\n\r\n".getBytes("UTF-8")
+    val buffer = payload ++ Array.fill[Byte](64)(0)
+
+    val decoded = UPnPExternalIPProvider().decodeSsdpResponse(buffer, payload.length)
+
+    decoded shouldBe "HTTP/1.1 200 OK\r\nLOCATION: http://192.168.1.1:1900/device.xml"
+  }
 }
