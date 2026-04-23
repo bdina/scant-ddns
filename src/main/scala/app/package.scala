@@ -1,20 +1,15 @@
 package app
 
 package object network {
-  object Tags {
-    sealed class Host
-    sealed class Domain
-  }
-  import scalaz.{@@, Tag => _Tag}
-  type Host = String @@ Tags.Host
+  opaque type Host = String
   object Host {
-    def apply(name: String) = _Tag[String, Tags.Host](name)
-    def unapply(name: Host) = Some(_Tag.unwrap(name))
+    def apply(name: String): Host = name
+    def unapply(name: Host): Option[String] = Some(name)
   }
-  type Domain = String @@ Tags.Domain
+  opaque type Domain = String
   object Domain {
-    def apply(name: String) = _Tag[String, Tags.Domain](name)
-    def unapply(name: Domain) = Some(_Tag.unwrap(name))
+    def apply(name: String): Domain = name
+    def unapply(name: Domain): Option[String] = Some(name)
   }
 }
 

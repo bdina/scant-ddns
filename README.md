@@ -2,7 +2,14 @@
 A hardly sufficient Dynamic DNS updater
 
 ### Requirements
-this project requires `Java 23` and `Scala 2.13.14`
+this project requires `Java 23` and `Scala 3.8.3`
+
+## Regression tests
+The test suite is deterministic and does not require live network access.
+Run tests in the same Dockerized build environment:
+```
+docker run --rm -v "$PWD":/workspace -w /workspace gradle:jdk23 gradle test
+```
 
 ## Create a native image (of shadowJar)
 1. use gradle to create a build of the shadow jar:

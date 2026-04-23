@@ -29,7 +29,7 @@ package object http {
     def tryPost(uri: URI, body: String, headers: Map[String,String]): Try[String] = Try {
       val _headers = headers.flatMap { case (k, v) => List(k, v) }.toSeq
       val _body = HttpRequest.BodyPublishers.ofString(body)
-      val request = HttpRequest.newBuilder(uri).headers(_headers:_*).POST(_body).build()
+      val request = HttpRequest.newBuilder(uri).headers(_headers*).POST(_body).build()
       hc.send(request, HttpResponse.BodyHandlers.ofString()).body
     }
   }

@@ -78,14 +78,11 @@ object SimpleDnsClient extends app.ScantLogging {
   }
 
   object Response {
-    object Tags {
-      sealed class TTL
-    }
-    import scalaz.{@@, Tag => _Tag}
-    type TTL = Long @@ Tags.TTL
+    opaque type TTL = Long
     object TTL {
-      def apply(time: Long) = _Tag[Long, Tags.TTL](time)
-      def unapply(time: TTL) = Some(_Tag.unwrap(time))
+      def apply(time: Long): TTL = time
+      def unapply(time: TTL): Option[Long] = Some(time)
+      def value(time: TTL): Long = time
     }
     case class Question(address: InetAddress, ttl: TTL)
     object Question {
@@ -101,11 +98,11 @@ object SimpleDnsClient extends app.ScantLogging {
           logger.fine(f"Additional RRs: 0x${din.readShort()}%x")
 
           var recLen = din.readByte()
-          do {
+          while (recLen > 0) {
             val record = din.read(new Array[Byte](recLen))
             logger.fine(s"Record: $record")
             recLen = din.readByte()
-          } while (recLen > 0)
+          }
 
           logger.finest(f"Record Type: 0x${din.readShort()}%x")
           logger.finest(f"Class: 0x${din.readShort()}%x")
@@ -177,7 +174,7 @@ case class SimpleDnsClient(val dnsResolver: InetAddress = SimpleDnsClient.dnsSer
 
         dnsIp.map { case response =>
           val address = response.address
-          val Response.TTL(ttl) = response.ttl
+          val ttl = Response.TTL.value(response.ttl)
           logger.info(s"cache DNS response [${address.getHostAddress}] for $ttl seconds")
           this.cached_address = Some((address, Instant.now.plusSeconds(ttl), question))
           address

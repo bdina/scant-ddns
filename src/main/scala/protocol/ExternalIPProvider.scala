@@ -26,9 +26,9 @@ case object ExternalIPProvider extends app.ScantLogging {
   }
 
   import scala.concurrent.Future
-  def failover(secondary: ExternalIPProvider = opendns)(implicit ec: scala.concurrent.ExecutionContext): Future[Option[InetAddress]] = {
+  def failover(primary: ExternalIPProvider = upnp, secondary: ExternalIPProvider = opendns)(implicit ec: scala.concurrent.ExecutionContext): Future[Option[InetAddress]] = {
     Future {
-      upnp.address() match {
+      primary.address() match {
         case res @ Some(_) => res
         case None =>
           logger.info("FAILOVER to use OpenDNS reverse resolution to find IP")

@@ -18,19 +18,13 @@ repositories {
 }
 
 ext {
-    scala_maj = '2.13'
-    scala_ver = "${scala_maj}.16"
+    scala_maj = '3'
+    scala_ver = '3.8.3'
 }
 
 dependencies {
-    implementation group: 'org.scala-lang' , name: 'scala-library'  , version: scala_ver
-    implementation group: 'org.scala-lang' , name: 'scala-compiler' , version: scala_ver
-    implementation group: 'org.scala-lang' , name: 'scala-reflect'  , version: scala_ver
-
-    implementation group: 'org.scala-lang.modules', name: "scala-async_${scala_maj}", version: '1.0.1'
+    implementation group: 'org.scala-lang', name: "scala3-library_${scala_maj}", version: scala_ver
     implementation group: 'org.scala-lang.modules', name: "scala-xml_${scala_maj}", version: '2.3.0'
-
-    implementation group: 'org.scalaz', name: "scalaz-core_${scala_maj}", version: '7.3.8'
 
     testImplementation group: 'org.scalatest', name: "scalatest_${scala_maj}", version: '3.2.19'
     testImplementation group: 'org.scalactic', name: "scalactic_${scala_maj}", version: '3.2.19'
@@ -96,16 +90,11 @@ scalaCli {
     maxHeap 8
 }
 
-compileScala {
+tasks.withType(ScalaCompile).configureEach {
     scalaCompileOptions.additionalParameters = [
         '-feature'
-      , '-deprecation'
-      , '-unchecked'
-      , '-Xlint'
-      , '-Xfatal-warnings'
-      , '-Xasync'
-      , '-Xsource:3'
-      , '-release'
-      , '22'
+      , '-Werror'
+      , '-java-output-version'
+      , '21'
     ]
 }

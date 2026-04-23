@@ -49,28 +49,33 @@ object UPnPExternalIPProvider extends app.ScantLogging {
   def controlLocation(ssdpResponse: String): Option[URI] =
     Location.findFirstMatchIn(ssdpResponse).map { case m => new URI(m.group("value")) }
 
-  def fetchExternalIp(url: URI): Option[InetAddress] = getXML(url).map { case xml =>
+  def controlUrlFromDeviceXml(url: URI, deviceXml: xml.Elem): Option[URI] = {
     val baseUrl = s"http://${url.getHost}:${url.getPort}"
-
-    val ctrl_url: Option[URI] = (xml \\ "service").find { case svc =>
+    (deviceXml \\ "service").find { case svc =>
       val serviceType = (svc \ "serviceType").text
       logger.fine(s"$serviceType")
       serviceType == serviceNs
     }.map { case svc =>
-      val controlUrl = s"$baseUrl${ (svc \ "controlURL").text }"
-      val scpdUrl    = s"$baseUrl${ (svc \ "SCPDURL").text }"
+      val controlUrl = s"$baseUrl${(svc \ "controlURL").text}"
+      val scpdUrl = s"$baseUrl${(svc \ "SCPDURL").text}"
       logger.fine(s"SCPD_URL: $scpdUrl\n  CTRL_URL: $controlUrl")
       new URI(controlUrl)
     }
+  }
 
-    ctrl_url.flatMap { case ctrlUrl =>
+  def externalIpFromSoapResponse(ctrlContent: xml.Elem): Option[InetAddress] = {
+    val parsed = (ctrlContent \\ "NewExternalIPAddress").text
+    logger.fine(s"external IP address => $parsed")
+    if (parsed.isEmpty) None else Some(InetAddress.getByName(parsed))
+  }
+
+  def fetchExternalIp(url: URI): Option[InetAddress] = getXML(url).map { case xml =>
+    controlUrlFromDeviceXml(url, xml).flatMap { case ctrlUrl =>
       postXML(ctrlUrl, soapBody, soapHeaders).map { case ctrlContent =>
-        val parsed = (ctrlContent \\ "NewExternalIPAddress").text
-        logger.fine(s"external IP address => $parsed")
-        InetAddress.getByName(parsed)
+        externalIpFromSoapResponse(ctrlContent)
       }.toOption
     }
-  }.toOption.flatten
+  }.toOption.flatten.flatten
 
   val SO_TIMEOUT = java.util.concurrent.TimeUnit.SECONDS.toMillis(1).toInt
 }

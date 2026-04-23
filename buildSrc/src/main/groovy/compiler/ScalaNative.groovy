@@ -8,8 +8,7 @@ import org.gradle.api.tasks.TaskAction
 
 class ScalaCliTask extends DefaultTask {
     enum Option {
-        ASYNC('--Xasync')
-      , PACKAGE('--power package')
+        PACKAGE('--power package')
       String arg
       private Option(String s) { this.arg = s }
     }
@@ -17,7 +16,7 @@ class ScalaCliTask extends DefaultTask {
     static final List<String> EXECUTABLE = [ 'scala-cli' ]
 
     @Input
-    List<Option> parameters = [ Option.ASYNC ]
+    List<Option> parameters = []
 
     @Input
     Integer minHeap = 1
@@ -45,7 +44,7 @@ class ScalaCliTask extends DefaultTask {
             }
             .join(' ')
 
-        def command = "scala-cli --power package ${sources} --scala ${project.ext.scala_ver} --native -Xasync ${dStr} -o ${project.name}"
+        def command = "scala-cli --power package ${sources} --scala ${project.ext.scala_ver} --native ${dStr} -o ${project.name}"
         logger.lifecycle "Executing scala-cli command -> ${command}"
 
         def process = command.execute(null, project.buildDir)

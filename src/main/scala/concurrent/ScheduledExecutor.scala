@@ -27,21 +27,21 @@ case class ScheduledExecutionContext(
 
   def schedule[T](by: Duration)(operation: => T): CancellableFuture[T] = {
     val promise = Promise[T]()
-    val scheduledFuture: ScheduledFuture[_] = execSrvc.schedule(new Runnable {
+    val scheduledFuture: ScheduledFuture[?] = execSrvc.schedule(new Runnable {
       override def run(): Unit = promise.complete(Try(operation))
     }, by.length, by.unit)
     DelegatingCancellableFuture(promise.future, scheduledFuture.cancel)
   }
   def scheduleAtFixedRate[T](period: Duration, initialDelay: Duration)(operation: => T): CancellableFuture[T] = {
     val promise = Promise[T]()
-    val scheduledFuture: ScheduledFuture[_] = execSrvc.scheduleAtFixedRate(new Runnable {
+    val scheduledFuture: ScheduledFuture[?] = execSrvc.scheduleAtFixedRate(new Runnable {
       override def run(): Unit = operation
     }, initialDelay.toMillis, period.length, period.unit)
     DelegatingCancellableFuture(promise.future, scheduledFuture.cancel)
   }
   def scheduleWithFixedDelay[T](delay: Duration, initialDelay: Duration)(operation: => T): CancellableFuture[T] = {
     val promise = Promise[T]()
-    val scheduledFuture: ScheduledFuture[_] = execSrvc.scheduleWithFixedDelay(new Runnable {
+    val scheduledFuture: ScheduledFuture[?] = execSrvc.scheduleWithFixedDelay(new Runnable {
       override def run(): Unit = operation
     }, initialDelay.toMillis, delay.length, delay.unit)
     DelegatingCancellableFuture(promise.future, scheduledFuture.cancel)
@@ -83,8 +83,7 @@ trait CancellableFuture[T] {
   def cancel(mayInterruptIfRunning: Boolean): Boolean
 }
 object CancellableFuture {
-  import scala.language.implicitConversions
-  implicit def extractFuture[T](cf: CancellableFuture[T]): Future[T] = cf.future
+  def toFuture[T](cf: CancellableFuture[T]): Future[T] = cf.future
 }
 
 private case class DelegatingCancellableFuture[T](val future: Future[T], cancelMethod: (Boolean) => Boolean) extends CancellableFuture[T] {
