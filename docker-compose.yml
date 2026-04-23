@@ -1,0 +1,9 @@
+services:
+  ddns:
+    image: ddns:latest
+    container_name: ddns
+    network_mode: host
+    restart: always
+    mem_limit: 6m
+    volumes:
+      - ./ddns.properties:/opt/ddns/ddns.properties:ro
