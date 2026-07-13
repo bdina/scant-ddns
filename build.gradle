@@ -25,7 +25,7 @@ repositories {
 
 ext {
     scala_maj = '3'
-    scala_ver = '3.8.3'
+    scala_ver = '3.8.4'
 }
 
 dependencies {
