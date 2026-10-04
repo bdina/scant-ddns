@@ -4,6 +4,6 @@ services:
     container_name: ddns
     network_mode: host
     restart: always
-    mem_limit: 6m
+    mem_limit: 64m
     volumes:
       - ./ddns.properties:/opt/ddns/ddns.properties:ro
