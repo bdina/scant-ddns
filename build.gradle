@@ -3,7 +3,7 @@ import compiler.NativeImageTask
 plugins {
   id 'compiler.native-image'
   id 'compiler.scala-cli'
-  id 'com.gradleup.shadow' version '9.3.1'
+  id 'com.gradleup.shadow' version '9.6.1'
   id 'com.palantir.git-version' version '1.0.0'
 }
 
@@ -40,6 +40,22 @@ dependencies {
 }
 
 version gitVersion()
+
+test {
+  useJUnit()
+  testLogging {
+    events "passed", "skipped", "failed"
+    showStandardStreams = false
+    exceptionFormat = 'full'
+  }
+  afterSuite { desc, result ->
+    if (desc.parent == null) {
+      println "\nTest result: ${result.resultType}"
+      println "Tests: ${result.testCount}, succeeded: ${result.successfulTestCount}, failed: ${result.failedTestCount}, skipped: ${result.skippedTestCount}"
+      println "Time: ${(result.endTime - result.startTime) / 1000.0} s"
+    }
+  }
+}
 
 application {
     mainClass.set('app.Scant')

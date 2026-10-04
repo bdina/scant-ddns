@@ -1,49 +1,40 @@
 # To build image run `docker build -f Dockerfile.jvm --tag ddns-jvm:<version> .`
 
-FROM ubuntu:24.04 AS build
+ARG OPENJDK_VERSION=25
+ARG OPENJDK_WORKDIR=/openjdk/src/project
 
-ARG JAVA_VERSION=25.0.2
+# Multi-stage image ... creates intermediate layer(s) for doing the build
+FROM eclipse-temurin:${OPENJDK_VERSION}-jdk-alpine AS build
+
 ARG GRADLE_VERSION=9.3.1
-ARG PROJECT_WORKDIR=/openjdk/src/project
+ARG OPENJDK_WORKDIR=/openjdk/src/project
 
-RUN apt-get update -y \
- && apt-get upgrade -y \
- && apt-get install -y wget unzip ca-certificates \
- && apt-get autoremove --purge -y \
- && wget https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${JAVA_VERSION}/graalvm-community-jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -P /tmp \
- && mkdir -p /opt/graalvm-community-jdk-${JAVA_VERSION} \
- && tar zxvf /tmp/graalvm-community-jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -C /opt/graalvm-community-jdk-${JAVA_VERSION} --strip-components 1 \
+# Install tools required for project
+RUN apk update \
+ && apk add wget unzip \
  && wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -P /tmp \
  && unzip -d /opt /tmp/gradle-${GRADLE_VERSION}-bin.zip
 
-ENV JAVA_HOME=/opt/graalvm-community-jdk-${JAVA_VERSION}
 ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
-ENV PATH=${JAVA_HOME}/bin:${GRADLE_HOME}/bin:${PATH}
+ENV PATH=${GRADLE_HOME}/bin:${PATH}
 
-WORKDIR ${PROJECT_WORKDIR}
+WORKDIR ${OPENJDK_WORKDIR}
 
-COPY . ${PROJECT_WORKDIR}
+# Copy the entire project and build it
+COPY . ${OPENJDK_WORKDIR}
 RUN ${GRADLE_HOME}/bin/gradle -q --no-daemon shadowJar
 
-FROM ubuntu:24.04 AS ddns-base
+# Runtime image
+FROM eclipse-temurin:${OPENJDK_VERSION}-jre-alpine AS ddns-base
 
-ARG JAVA_VERSION=25.0.2
-ARG PROJECT_WORKDIR=/openjdk/src/project
+ARG OPENJDK_WORKDIR=/openjdk/src/project
 
-RUN apt-get update -y \
- && apt-get install -y wget ca-certificates \
- && apt-get autoremove --purge -y \
- && wget https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${JAVA_VERSION}/graalvm-community-jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -P /tmp \
- && mkdir -p /opt/graalvm-community-jdk-${JAVA_VERSION} \
- && tar zxvf /tmp/graalvm-community-jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -C /opt/graalvm-community-jdk-${JAVA_VERSION} --strip-components 1
-
-ENV JAVA_HOME=/opt/graalvm-community-jdk-${JAVA_VERSION}
 ENV DDNS_HOME=/opt/ddns
-ENV PATH=${JAVA_HOME}/bin:${DDNS_HOME}/bin:${PATH}
+ENV PATH=${DDNS_HOME}/bin:${PATH}
 
 WORKDIR ${DDNS_HOME}
 
-COPY --from=build ${PROJECT_WORKDIR}/ddns* ${PROJECT_WORKDIR}/build/libs/* ${DDNS_HOME}/
+COPY --from=build ${OPENJDK_WORKDIR}/ddns* ${OPENJDK_WORKDIR}/build/libs/* ${DDNS_HOME}/
 
 FROM ddns-base AS ddns
 ENTRYPOINT [ "java" ]
